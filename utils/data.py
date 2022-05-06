@@ -1,0 +1,18 @@
+import numpy as np
+
+
+def bound_data(data):
+    M = 14
+    q = data[..., :M]
+    q = np.arctan2(np.sin(q), np.cos(q))
+    return np.concatenate([q, data[..., M:]], axis=-1)
+
+
+def unpack_data(x, n):
+    q0 = x[:, :n - 1]
+    qk = x[:, n:2 * n - 1]
+    xyth = x[:, 2 * n: 2 * n + 3]
+    q_dot_0 = x[:, 2 * n + 3: 3 * n + 2]
+    q_ddot_0 = x[:, 3 * n + 3: 4 * n + 2]
+    q_dot_k = x[:, 4 * n + 3: 5 * n + 2]
+    return q0, qk, xyth, q_dot_0, q_ddot_0, q_dot_k
