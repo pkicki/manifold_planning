@@ -5,13 +5,14 @@ import pinocchio as pino
 
 
 class VelocityProjector:
-    def __init__(self, urdf_path):
+    def __init__(self, urdf_path, n=9):
+        self.n = n
         self.model = pino.buildModelFromUrdf(urdf_path)
         self.data = self.model.createData()
         self.bounds = spo.Bounds(self.model.lowerPositionLimit[:7], self.model.upperPositionLimit[:7])
 
     def compute_q_dot(self, q, v_xyz, alpha):
-        q = np.pad(q, (0, 9 - q.shape[0]), mode='constant')
+        q = np.pad(q, (0, self.n - q.shape[0]), mode='constant')
         pino.computeJointJacobians(self.model, self.data, q)
         #J_36 = self.data.J[:3, :6]
         J_36 = self.data.J
