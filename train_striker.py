@@ -10,7 +10,7 @@ from utils.dataset import _ds
 from utils.execution import ExperimentHandler
 from utils.plotting import plot_qs
 from losses.constraint_functions import air_hockey_table
-from losses.velocities import Loss
+from losses.hittting import HittingLoss
 from models.iiwa_planner_boundaries import IiwaPlannerBoundaries
 from utils.constants import Limits, TableConstraint
 
@@ -34,7 +34,7 @@ urdf_path = os.path.join(os.path.dirname(__file__), "iiwa_striker.urdf")
 
 N = 15
 opt = tf.keras.optimizers.Adam(args.learning_rate)
-loss = Loss(N, urdf_path, air_hockey_table, Limits.q_dot, Limits.q_ddot)
+loss = HittingLoss(N, urdf_path, air_hockey_table, Limits.q_dot, Limits.q_ddot)
 model = IiwaPlannerBoundaries(N, 3, 2, loss.bsp, loss.bsp_t)
 
 experiment_handler = ExperimentHandler(args.working_dir, args.out_name, args.log_interval, model, opt)
