@@ -122,13 +122,13 @@ class Iiwa:
 
     def forward_kinematics(self, q):
         #q = tf.concat([q, tf.zeros_like(q)[..., :2]], axis=-1)
-        q = tf.concat([q, tf.zeros_like(q)[..., :3]], axis=-1)
+        q = tf.concat([q, tf.zeros_like(q)[..., :self.n_dof - q.shape[-1]]], axis=-1)
         Racc = tf.eye(3, batch_shape=tf.shape(q)[:-1])
         #xyz = tf.stack([TableConstraint.XLB - 0.4, TableConstraint.YLB / 2., 0.])[:, tf.newaxis]
         xyz = tf.stack([0.0, 0.0, 0.0])[:, tf.newaxis]
         for i in range(len(tf.shape(q)) - 1):
             xyz = xyz[tf.newaxis]
-        for i in range(9):
+        for i in range(self.n_dof):
             qi = q[..., i]
             j = self.joints[i]
             R, p = j.Rp(qi)

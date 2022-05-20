@@ -7,7 +7,8 @@ from utils.manipulator import Iiwa
 
 
 class StartPointOptimizer:
-    def __init__(self, urdf_path):
+    def __init__(self, urdf_path, n=9):
+        self.n = n
         self.model = pino.buildModelFromUrdf(urdf_path)
         self.data = self.model.createData()
         self.bounds = spo.Bounds(self.model.lowerPositionLimit[:7], self.model.upperPositionLimit[:7])
@@ -21,7 +22,7 @@ class StartPointOptimizer:
         #               np.pi/4 * (2*np.random.random() - 1.),
         #               1.92566224 + 0.3 * (2*np.random.random() - 1.),
         #               0.])
-        options = {'maxiter': 200, 'ftol': 1e-06, 'iprint': 1, 'disp': False,
+        options = {'maxiter': 300, 'ftol': 1e-06, 'iprint': 1, 'disp': False,
                    'eps': 1.4901161193847656e-08, 'finite_diff_rel_step': None}
         t0 = time()
         r = spo.minimize(lambda x: self.f(x, point), x0, method='SLSQP',
@@ -32,14 +33,18 @@ class StartPointOptimizer:
         return r.x
 
     def f(self, q, hit_point):
-        pino.forwardKinematics(self.model, self.data, np.concatenate([q, np.zeros(2)]))
+        pino.forwardKinematics(self.model, self.data, np.pad(q, (0, self.n - len(q)), mode='constant'))
         x = self.data.oMi[-1].translation
         diff = x - hit_point
         return np.linalg.norm(diff)
 
 
 if __name__ == "__main__":
-    urdf_path = "../../iiwa_striker.urdf"
-    point = np.array([1.0, 0.0, 0.1505])
-    po = StartPointOptimizer(urdf_path)
-    po.solve(point)
+    #urdf_path = "../../iiwa_striker.urdf"
+    urdf_path = "../iiwa.urdf"
+    point = np.array([0.3, -0.4, 0.2])
+    po = StartPointOptimizer(urdf_path, 7)
+    q = po.solve(point)
+    pino.forwardKinematics(po.model, po.data, np.pad(q, (0, po.n - len(q)), mode='constant'))
+    x = po.data.oMi[-1].translation
+    a = 0
