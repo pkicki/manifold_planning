@@ -3,8 +3,8 @@ from math import pi
 import tensorflow as tf
 import numpy as np
 
-from utils.constants import Limits
-from utils.data import unpack_data_boundaries, unpack_data_linear_move
+from manifold_planning.utils.constants import Limits
+from manifold_planning.utils.data import unpack_data_linear_move
 
 
 class IiwaPlanner(tf.keras.Model):
