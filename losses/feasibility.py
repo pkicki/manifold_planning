@@ -11,7 +11,6 @@ class FeasibilityLoss:
     def __init__(self, N, urdf_path, q_dot_limits, q_ddot_limits):
         self.bsp_t = BSpline(20)
         self.bsp = BSpline(N)
-        self.man = Iiwa(urdf_path)
         self.q_dot_limits = q_dot_limits
         self.q_ddot_limits = q_ddot_limits
         self.model = pino.buildModelFromUrdf(urdf_path)

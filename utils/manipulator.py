@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
+import pinocchio as pino
 import xml.etree.ElementTree as ET
-from .constants import ManipulatorDimensions, TableConstraint
 
 
 def make_R(roll, pitch, yaw):
@@ -32,11 +32,14 @@ class JointTF:
         self.yaw = rpy[2]
         self.xyz = np.array(xyz)
         self.axis = axis
+        self.fixed = self.axis is None
         self.lb = lb
         self.ub = ub
 
     def R(self, q):
         Rb = make_R(self.roll, self.pitch, self.yaw)
+        if self.axis is None:
+            return Rb
         Rq = make_R(q * self.axis[0], q * self.axis[1], q * self.axis[2])
         return Rb @ Rq
 
@@ -50,55 +53,6 @@ class JointTF:
         return self.R(q), self.xyz[:, np.newaxis]
 
 
-#class Manipulator:
-#    def __init__(self):
-#        self.l1 = ManipulatorDimensions.L1
-#        self.l2 = ManipulatorDimensions.L2
-#        self.l3 = ManipulatorDimensions.L3
-#        self.w1 = ManipulatorDimensions.W1
-#        self.w2 = ManipulatorDimensions.W2
-#        self.w3 = ManipulatorDimensions.W3
-#        self.pos_x = ManipulatorDimensions.X
-#        self.pos_y = ManipulatorDimensions.Y
-#
-#    def forward_kinematics(self, th):
-#        th1 = th[..., 0]
-#        th2 = th[..., 1]
-#        th3 = th[..., 2]
-#        x1 = self.pos_x * tf.ones_like(th1)
-#        y1 = self.pos_y * tf.ones_like(th1)
-#        x2 = self.l1 * tf.cos(th1) + x1
-#        y2 = self.l1 * tf.sin(th1) + y1
-#        x3 = self.l2 * tf.cos(th1 + th2) + x2
-#        y3 = self.l2 * tf.sin(th1 + th2) + y2
-#        x4 = self.l3 * tf.cos(th1 + th2 + th3) + x3
-#        y4 = self.l3 * tf.sin(th1 + th2 + th3) + y3
-#        return x4, y4, x3, y3, x2, y2, x1, y1
-#
-#    def plot(self, th):
-#        def get_link_contour(l, w, th, x, y):
-#            xy = np.stack([x, y], axis=-1)
-#            p1 = np.array([0., -w / 2])
-#            p2 = np.array([0., +w / 2])
-#            p3 = np.array([l, +w / 2])
-#            p4 = np.array([l, -w / 2])
-#            d = np.stack([p1, p2, p3, p4, p1], axis=0)
-#            R = Rot(th)[np.newaxis]
-#            d = d[..., np.newaxis]
-#            xy = xy[np.newaxis, :, np.newaxis]
-#            contour = xy + R @ d
-#            return contour[..., 0]
-#
-#        x4, y4, x3, y3, x2, y2, x1, y1 = self.forward_kinematics(th)
-#        p1 = get_link_contour(self.l1, self.w1, th[..., 0], x1, y1)
-#        plt.fill(p1[:, 0], p1[:, 1], 'r')
-#        p2 = get_link_contour(self.l2, self.w2, np.sum(th[..., :2], axis=-1), x2, y2)
-#        plt.fill(p2[:, 0], p2[:, 1], 'g')
-#        p3 = get_link_contour(self.l3, self.w3, np.sum(th[..., :3], axis=-1), x3, y3)
-#        plt.fill(p3[:, 0], p3[:, 1], 'b')
-#        return p1, p2, p3
-
-
 class Iiwa:
     def __init__(self, urdf_path):
         self.joints = Iiwa.parse_urdf(urdf_path)
@@ -109,22 +63,35 @@ class Iiwa:
         root = ET.parse(urdf_path).getroot()
         joints = []
         for joint in root.findall("joint"):
-            if joint.get('name').startswith('F_joint') or joint.get('name') == 'F_striker_joint_1':
-                parent = joint.find("parent").get('link')
-                child = joint.find("child").get('link')
-                lb = float(joint.find("limit").get("lower")) if joint.find("limit") is not None else 0.0
-                ub = float(joint.find("limit").get("upper")) if joint.find("limit") is not None else 0.0
-                rpy = [float(x) for x in joint.find("origin").get('rpy').split()]
-                xyz = [float(x) for x in joint.find("origin").get('xyz').split()]
-                axis = [float(x) for x in joint.find("axis").get('xyz').split()]
-                joints.append(JointTF(parent, child, rpy, xyz, axis, lb, ub))
+            parent = joint.find("parent").get('link')
+            child = joint.find("child").get('link')
+            lb = float(joint.find("limit").get("lower")) if joint.find("limit") is not None else 0.0
+            ub = float(joint.find("limit").get("upper")) if joint.find("limit") is not None else 0.0
+            rpy = [float(x) for x in joint.find("origin").get('rpy').split()]
+            xyz = [float(x) for x in joint.find("origin").get('xyz').split()]
+            axis = joint.find("axis")
+            if axis is not None:
+                axis = [float(x) for x in axis.get('xyz').split()]
+            joints.append(JointTF(parent, child, rpy, xyz, axis, lb, ub))
+            # end at striker_tip
+            if joints[-1].child.endswith("striker_tip"):
+                break
         return joints
 
     def forward_kinematics(self, q):
-        #q = tf.concat([q, tf.zeros_like(q)[..., :2]], axis=-1)
-        q = tf.concat([q, tf.zeros_like(q)[..., :self.n_dof - q.shape[-1]]], axis=-1)
+        q = tf.concat([q, tf.zeros_like(q)[..., :7 - q.shape[-1]]], axis=-1)
+        qs = []
+        qidx = 0
+        for i in range(self.n_dof):
+            if self.joints[i].fixed:
+                qs.append(tf.zeros_like(q)[..., 0])
+            else:
+                qs.append(q[..., qidx])
+                qidx += 1
+
+        q = tf.stack(qs, axis=-1)
+        q = tf.cast(q, tf.float32)
         Racc = tf.eye(3, batch_shape=tf.shape(q)[:-1])
-        #xyz = tf.stack([TableConstraint.XLB - 0.4, TableConstraint.YLB / 2., 0.])[:, tf.newaxis]
         xyz = tf.stack([0.0, 0.0, 0.0])[:, tf.newaxis]
         for i in range(len(tf.shape(q)) - 1):
             xyz = xyz[tf.newaxis]
@@ -137,3 +104,20 @@ class Iiwa:
             xyz = xyz + Racc @ p
             Racc = Racc @ R
         return xyz
+
+
+if __name__ == "__main__":
+    urdf_path = "/airhockey/manifold_planning/iiwa_striker_new.urdf"
+    pino_model = pino.buildModelFromUrdf(urdf_path)
+    pino_data = pino_model.createData()
+
+    #qk = np.zeros(6)
+    qk = np.array([0.2, 0.2, 0.5, 0.9, 0., 0.])
+    q = np.concatenate([qk, np.zeros(3)], axis=-1)
+    pino.forwardKinematics(pino_model, pino_data, q)
+    xyz_pino = pino_data.oMi[-1].translation
+
+    man = Iiwa(urdf_path)
+    xyz = man.forward_kinematics(qk)
+    print(xyz_pino)
+    print(xyz.numpy()[..., 0])
