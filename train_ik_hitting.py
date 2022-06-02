@@ -74,9 +74,8 @@ for epoch in range(3000):
     epoch_loss = []
     experiment_handler.log_validation()
     for i, d in _ds('Val', dataset_epoch, val_size, epoch, args.batch_size):
-        with tf.GradientTape() as tape:
-            qk = model(d)
-            model_loss, q_loss, q_loss_abs = loss(qk, d)
+        qk = model(d)
+        model_loss, q_loss, q_loss_abs = loss(qk, d)
 
         epoch_loss.append(model_loss)
         with tf.summary.record_if(val_step % args.log_interval == 0):
