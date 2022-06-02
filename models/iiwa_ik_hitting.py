@@ -4,9 +4,9 @@ import numpy as np
 from utils.normalize import normalize_xy
 
 
-class PosSup(tf.keras.Model):
+class IiwaIKHitting(tf.keras.Model):
     def __init__(self):
-        super(PosSup, self).__init__()
+        super(IiwaIKHitting, self).__init__()
         self.n_dof = 6
 
         activation = tf.keras.activations.tanh
