@@ -77,9 +77,6 @@ for epoch in range(3000):
         with tf.GradientTape() as tape:
             qk = model(d)
             model_loss, q_loss, q_loss_abs = loss(qk, d)
-        grads = tape.gradient(model_loss, model.trainable_variables)
-        opt.apply_gradients(zip(grads, model.trainable_variables))
-
 
         epoch_loss.append(model_loss)
         with tf.summary.record_if(val_step % args.log_interval == 0):
