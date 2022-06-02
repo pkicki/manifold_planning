@@ -1,6 +1,8 @@
 import tensorflow as tf
 import numpy as np
 
+from utils.normalize import normalize_xy
+
 
 class PosSup(tf.keras.Model):
     def __init__(self):
@@ -21,7 +23,7 @@ class PosSup(tf.keras.Model):
     def __call__(self, x):
         x = tf.cast(x, tf.float32)
         xyth = x[:, :3]
-        xy = (xyth[..., :2] - np.array([1.1, 0.])[np.newaxis]) / np.array([0.2, 0.4])[np.newaxis]
+        xy = normalize_xy(xyth[..., :2])
         ort = np.stack([np.cos(xyth[..., -1]), np.sin(xyth[..., -1])], axis=-1)
         x = np.concatenate([xy, ort], axis=-1)
         for l in self.fc:
