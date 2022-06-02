@@ -18,7 +18,7 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 class args:
     batch_size = 64
     working_dir = './trainings'
-    out_name = 'ik_hitting_nopos'
+    out_name = 'ik_hitting_nopos_data10k_fixedtraining_1em5'
     log_interval = 10
     learning_rate = 1e-5
     dataset_path = "./data/paper/ik_hitting/train/data.tsv"
