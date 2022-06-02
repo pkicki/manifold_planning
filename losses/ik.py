@@ -24,7 +24,7 @@ class IKHittingPosLoss:
         q_loss_abs = tf.reduce_sum(tf.abs(qk - qd), axis=-1)
 
         model_loss = pos_loss + q_loss
-        return model_loss, pos_loss, pos_loss_abs, q_loss, q_loss_abs
+        return model_loss, q_loss, q_loss_abs, pos_loss, pos_loss_abs
 
 
 class IKHittingLoss:
