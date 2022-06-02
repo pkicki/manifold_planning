@@ -1,17 +1,6 @@
 import numpy as np
 
 
-class ManipulatorDimensions:
-    L1 = 0.8
-    L2 = 0.6
-    L3 = 0.3
-    X = -0.4
-    Y = 0.3
-    W1 = 0.005
-    W2 = 0.005
-    W3 = 0.005
-
-
 class TableConstraint:
     XLB = 0.6
     # XLB = 0.55
