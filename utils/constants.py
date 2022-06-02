@@ -18,7 +18,7 @@ class TableConstraint:
     YLB = -0.45
     XRT = 2.
     YRT = 0.45
-    Z = 0.1505
+    Z = 0.16
 
     @staticmethod
     def in_table_xy(x, y):
