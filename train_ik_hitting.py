@@ -5,6 +5,7 @@ import os
 import tensorflow as tf
 import numpy as np
 
+from utils.constants import UrdfModels
 from utils.dataset import _ds
 from utils.execution import ExperimentHandler
 from losses.ik import IKHittingLoss
@@ -23,15 +24,15 @@ class args:
     learning_rate = 1e-5
     dataset_path = "./data/paper/ik_hitting/train/data.tsv"
 
-train_data = np.loadtxt(args.dataset_path, delimiter='\t').astype(np.float32)
+train_data = np.loadtxt(args.dataset_path, delimiter='\t').astype(np.float32)[:10]
 train_size = train_data.shape[0]
 train_ds = tf.data.Dataset.from_tensor_slices(train_data)
 
-val_data = np.loadtxt(args.dataset_path.replace("train", "val"), delimiter='\t').astype(np.float32)
+val_data = np.loadtxt(args.dataset_path.replace("train", "val"), delimiter='\t').astype(np.float32)[:10]
 val_size = val_data.shape[0]
 val_ds = tf.data.Dataset.from_tensor_slices(val_data)
 
-urdf_path = os.path.join(os.path.dirname(__file__), "iiwa_striker_new.urdf")
+urdf_path = os.path.join(os.path.dirname(__file__), UrdfModels.striker)
 
 
 opt = tf.keras.optimizers.Adam(args.learning_rate)
