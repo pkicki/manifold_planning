@@ -16,7 +16,7 @@ class FeasibilityLoss:
         self.model = pino.buildModelFromUrdf(urdf_path)
         self.data = self.model.createData()
 
-    def  call(self, q_cps, t_cps, data):
+    def call(self, q_cps, t_cps, data):
         q = self.bsp.N @ q_cps
         q_dot_tau = self.bsp.dN @ q_cps
         q_ddot_tau = self.bsp.ddN @ q_cps
