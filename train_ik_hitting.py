@@ -60,7 +60,7 @@ for epoch in range(3000):
         with tf.summary.record_if(train_step % args.log_interval == 0):
             tf.summary.scalar('metrics/model_loss', tf.reduce_mean(model_loss), step=train_step)
             tf.summary.scalar('metrics/q_loss', tf.reduce_mean(q_loss), step=train_step)
-            tf.summary.scalar('metrics/d_loss_abs', tf.reduce_mean(q_loss_abs), step=train_step)
+            tf.summary.scalar('metrics/q_loss_abs', tf.reduce_mean(q_loss_abs), step=train_step)
         train_step += 1
 
     epoch_loss = tf.reduce_mean(tf.concat(epoch_loss, -1))
@@ -77,9 +77,6 @@ for epoch in range(3000):
         with tf.GradientTape() as tape:
             qk = model(d)
             model_loss, q_loss, q_loss_abs = loss(qk, d)
-        grads = tape.gradient(model_loss, model.trainable_variables)
-        opt.apply_gradients(zip(grads, model.trainable_variables))
-
 
         epoch_loss.append(model_loss)
         with tf.summary.record_if(val_step % args.log_interval == 0):
