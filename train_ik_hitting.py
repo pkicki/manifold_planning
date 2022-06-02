@@ -60,7 +60,7 @@ for epoch in range(3000):
         with tf.summary.record_if(train_step % args.log_interval == 0):
             tf.summary.scalar('metrics/model_loss', tf.reduce_mean(model_loss), step=train_step)
             tf.summary.scalar('metrics/q_loss', tf.reduce_mean(q_loss), step=train_step)
-            tf.summary.scalar('metrics/d_loss_abs', tf.reduce_mean(q_loss_abs), step=train_step)
+            tf.summary.scalar('metrics/q_loss_abs', tf.reduce_mean(q_loss_abs), step=train_step)
         train_step += 1
 
     epoch_loss = tf.reduce_mean(tf.concat(epoch_loss, -1))
