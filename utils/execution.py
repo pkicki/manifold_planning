@@ -1,5 +1,7 @@
 import argparse
 import os
+from glob import glob
+
 import tensorflow as tf
 
 class ExperimentHandler:
@@ -9,6 +11,7 @@ class ExperimentHandler:
         val_log_path = os.path.join(working_path, out_name, 'logs', 'val')
         self.checkpoints_last_n_path = os.path.join(working_path, out_name, 'checkpoints', 'last_n')
         self.checkpoints_best_path = os.path.join(working_path, out_name, 'checkpoints', 'best')
+        self.checkpoints_best_dir = os.path.dirname(self.checkpoints_best_path)
 
         os.makedirs(train_log_path, exist_ok=True)
         os.makedirs(val_log_path, exist_ok=True)
@@ -34,6 +37,13 @@ class ExperimentHandler:
 
     def save_best(self):
         self.ckpt.save(self.checkpoints_best_path)
+        list_of_files = [f for f in os.listdir(self.checkpoints_best_dir) if f.startswith("best-")]
+        full_path = [os.path.join(self.checkpoints_best_dir, x) for x in list_of_files]
+        if len(full_path) > 20:
+            oldest_file = min(full_path, key=os.path.getctime)
+            oldest_files = glob(oldest_file[:oldest_file.rfind(".")+1] + "*")
+            for f in oldest_files:
+                os.remove(f)
 
     def save_last(self):
         self.ckpt.save(self.checkpoints_last_n_path)
