@@ -27,10 +27,10 @@ def get_hitting_configuration(x, y, th, q0=None):
     #print("MAG:", s[-1])
     return q, q_dot.tolist(), mag, v
 
-def get_hitting_configuration_opt(x, y, th, q0=None):
+def get_hitting_configuration_opt(x, y, z, th, q0=None):
     if q0 is None:
         q0 = [0., 0.7135, 0., -0.5025, 0., 1.9257, 0.]
-    s = hpoo.optimize(x, y, np.cos(th), np.sin(th), q0)
+    s = hpoo.optimize(x, y, z, np.cos(th), np.sin(th), q0)
     if not s:
         return None, None, None, None
     q = s[:7]
