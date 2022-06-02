@@ -19,16 +19,16 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 class args:
     batch_size = 64
     working_dir = './trainings'
-    out_name = 'ik_hitting_pos_data10k_fixedtraining_1em5'
+    out_name = 'ik_hitting_pos_data10k_fixedtraininganddata_1em5'
     log_interval = 10
     learning_rate = 1e-5
     dataset_path = "./data/paper/ik_hitting/train/data.tsv"
 
-train_data = np.loadtxt(args.dataset_path, delimiter='\t').astype(np.float32)[:10]
+train_data = np.loadtxt(args.dataset_path, delimiter='\t').astype(np.float32)
 train_size = train_data.shape[0]
 train_ds = tf.data.Dataset.from_tensor_slices(train_data)
 
-val_data = np.loadtxt(args.dataset_path.replace("train", "val"), delimiter='\t').astype(np.float32)[:10]
+val_data = np.loadtxt(args.dataset_path.replace("train", "val"), delimiter='\t').astype(np.float32)
 val_size = val_data.shape[0]
 val_ds = tf.data.Dataset.from_tensor_slices(val_data)
 
