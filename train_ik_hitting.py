@@ -7,7 +7,7 @@ import numpy as np
 
 from utils.dataset import _ds
 from utils.execution import ExperimentHandler
-from losses.ik import IKHittingLoss
+from losses.ik import IKHittingLoss, IKHittingPosLoss
 from models.iiwa_ik_hitting import IiwaIKHitting
 
 
@@ -18,7 +18,7 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 class args:
     batch_size = 64
     working_dir = './trainings'
-    out_name = 'ik_hitting_nopos_data10k_fixedtraining_1em5'
+    out_name = 'ik_hitting_pos_data10k_fixedtraining_1em5'
     log_interval = 10
     learning_rate = 1e-5
     dataset_path = "./data/paper/ik_hitting/train/data.tsv"
@@ -35,7 +35,8 @@ urdf_path = os.path.join(os.path.dirname(__file__), "iiwa_striker_new.urdf")
 
 
 opt = tf.keras.optimizers.Adam(args.learning_rate)
-loss = IKHittingLoss()
+#loss = IKHittingLoss()
+loss = IKHittingPosLoss(urdf_path)
 model = IiwaIKHitting()
 
 experiment_handler = ExperimentHandler(args.working_dir, args.out_name, args.log_interval, model, opt)
@@ -51,7 +52,7 @@ for epoch in range(3000):
     for i, d in _ds('Train', dataset_epoch, train_size, epoch, args.batch_size):
         with tf.GradientTape() as tape:
             qk = model(d)
-            model_loss, q_loss, q_loss_abs, = loss(qk, d)
+            model_loss, q_loss, q_loss_abs, *_ = loss(qk, d)
         grads = tape.gradient(model_loss, model.trainable_variables)
         opt.apply_gradients(zip(grads, model.trainable_variables))
 
@@ -75,7 +76,7 @@ for epoch in range(3000):
     experiment_handler.log_validation()
     for i, d in _ds('Val', dataset_epoch, val_size, epoch, args.batch_size):
         qk = model(d)
-        model_loss, q_loss, q_loss_abs = loss(qk, d)
+        model_loss, q_loss, q_loss_abs, *_ = loss(qk, d)
 
         epoch_loss.append(model_loss)
         with tf.summary.record_if(val_step % args.log_interval == 0):
