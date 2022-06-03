@@ -11,7 +11,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 import numpy as np
 import tensorflow as tf
-from utils.constants import TableConstraint, Limits
+from utils.constants import TableConstraint, Limits, UrdfModels
 
 from models.iiwa_ik_hitting import IiwaIKHitting
 from utils.execution import ExperimentHandler
@@ -99,7 +99,7 @@ def validate_if_initial_mallet_and_puck_positions_makes_hit_possible(xm, ym, xp,
     return np.sqrt((ym - yp)**2 + (xm - xp)**2) > 0.3
 
 
-urdf_path = os.path.join(os.path.dirname(__file__), "../iiwa_striker.urdf")
+urdf_path = os.path.join(os.path.dirname(__file__), "..", UrdfModels.striker)
 po = StartPointOptimizer(urdf_path)
 vp = VelocityProjector(urdf_path)
 

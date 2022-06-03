@@ -3,6 +3,8 @@ import scipy
 from scipy import optimize as spo
 import pinocchio as pino
 
+from utils.constants import UrdfModels
+
 
 class VelocityProjector:
     def __init__(self, urdf_path, n=9):
@@ -22,7 +24,7 @@ class VelocityProjector:
         return q_dot
 
 if __name__ == "__main__":
-    urdf_path = "../../iiwa_striker.urdf"
+    urdf_path = "../../" + UrdfModels.striker
     q = np.array([0., 0.7135205165808098, 0., -0.5024774869152212, 0., 1.9256622406212651, 0., 0., 0.])
     v = np.array([1., 0.5, 0.])[:, np.newaxis]
     alpha = np.array([1., 0.5, 0.])[:, np.newaxis]
