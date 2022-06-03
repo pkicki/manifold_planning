@@ -3,8 +3,8 @@ from math import pi
 import tensorflow as tf
 import numpy as np
 
-from manifold_planning.utils.constants import Limits
-from manifold_planning.utils.data import unpack_data_boundaries
+from utils.constants import Limits
+from utils.data import unpack_data_boundaries
 
 class IiwaPlannerBoundaries(tf.keras.Model):
     def __init__(self, N, n_pts_fixed_begin, n_pts_fixed_end, bsp, bsp_t):
@@ -50,9 +50,9 @@ class IiwaPlannerBoundaries(tf.keras.Model):
             xe = tf.concat([xe, q_dot_d / Limits.q_dot[np.newaxis]], axis=-1)
 
         # TODO remove this hotfix when new models will be trained
-        #x = tf.concat([xb, xe], axis=-1)
-        x = tf.concat([q0 / pi, qd / pi, q_dot_0 / Limits.q_dot[np.newaxis], q_ddot_0 / Limits.q_ddot[np.newaxis],
-                       q_dot_d / Limits.q_dot[np.newaxis]], axis=-1)
+        x = tf.concat([xb, xe], axis=-1)
+        #x = tf.concat([q0 / pi, qd / pi, q_dot_0 / Limits.q_dot[np.newaxis], q_ddot_0 / Limits.q_ddot[np.newaxis],
+        #               q_dot_d / Limits.q_dot[np.newaxis]], axis=-1)
 
         for l in self.fc:
             x = l(x)
