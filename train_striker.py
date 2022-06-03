@@ -22,8 +22,8 @@ from utils.constants import Limits, TableConstraint, UrdfModels
 class args:
     batch_size = 64
     working_dir = './trainings'
-    out_name = 'xD'
-    log_interval = 5
+    out_name = 'striker_lr1em6_t1e0_z1e2'
+    log_interval = 10
     learning_rate = 1e-6
     dataset_path = "./data/paper/airhockey_table_moves/train/data.tsv"
 
