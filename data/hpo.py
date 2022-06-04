@@ -1,10 +1,11 @@
+import os
 import subprocess
 from time import perf_counter
 
 import numpy as np
 import pinocchio as pino
 
-from utils.constants import Limits
+from utils.constants import Limits, UrdfModels, TableConstraint
 import matplotlib.pyplot as plt
 
 import utils.hpo_opt as hpoo
@@ -12,11 +13,11 @@ import utils.hpo as hpo
 
 #import tensorflow as tf
 
-def get_hitting_configuration(x, y, th, q0=None):
+def get_hitting_configuration(x, y, z, th, q0=None):
     if q0 is None:
         q0 = [0., 0.7135, 0., -0.5025, 0., 1.9257, 0.]
-    s = hpoo.optimize(x, y, np.cos(th), np.sin(th), q0)
-    #s = hpo.optimize(x, y, np.cos(th), np.sin(th), q0)
+    #s = hpoo.optimize(x, y, np.cos(th), np.sin(th), q0)
+    s = hpo.optimize(x, y, z, np.cos(th), np.sin(th), q0)
     q = s[:7]
     q_dot = np.array(s[7:14])
     mul = np.max(np.abs(q_dot[:6]) / Limits.q_dot)
@@ -43,7 +44,7 @@ def get_hitting_configuration_opt(x, y, z, th, q0=None):
 
 if __name__ == "__main__":
     q0 = [0., 0.7135, 0., -0.5025, 0., 1.9257, 0.]
-    urdf_path = "/home/piotr/b8/rl/3dof_planning/iiwa_striker.urdf"
+    urdf_path = os.path.join(os.path.dirname(__file__), "..", UrdfModels.striker)
     model = pino.buildModelFromUrdf(urdf_path)
     data = model.createData()
     #x = 1.0261847865032634
@@ -61,8 +62,8 @@ if __name__ == "__main__":
     th = 0.0
     #q0[0] = y / 2
     print(np.cos(th), np.sin(th))
-    q, q_dot, mag, v = get_hitting_configuration(x, y, th, q0)
-    q1, q_dot1, mag1, v1 = get_hitting_configuration_opt(x, y, th, q0)
+    q, q_dot, mag, v = get_hitting_configuration(x, y, TableConstraint.Z, th, q0)
+    q1, q_dot1, mag1, v1 = get_hitting_configuration_opt(x, y, TableConstraint.Z, th, q0)
     q = np.concatenate([np.array(q), np.zeros(2)], axis=-1)
     pino.forwardKinematics(model, data, q)
     xyz_pino = data.oMi[-1].translation
@@ -76,7 +77,7 @@ if __name__ == "__main__":
     #print(q_dot)
     q0 = [0., 0.7135, 0., -0.5025, 0., 1.9257, 0.]
     print(np.sum(np.abs(np.array(q0)[:6] - np.array(q)[:6]) / Limits.q_dot))
-    assert False
+    #assert False
 
     X, Y = 15, 51
     x = 1.
@@ -111,8 +112,9 @@ if __name__ == "__main__":
                 #q0[6] = q0[6] + y / 4
 
                 q0s.append(q0.copy())
-                q, q_dot, mag, v = get_hitting_configuration(x, y, th, q0)
-                q_, q_dot_, mag_opt, v_opt = get_hitting_configuration_opt(x, y, th, q0)
+                #q, q_dot, mag, v = get_hitting_configuration(x, y, TableConstraint.Z, th, q0)
+                q, q_dot, mag, v = get_hitting_configuration_opt(x, y, TableConstraint.Z, th, q0)
+                q_, q_dot_, mag_opt, v_opt = get_hitting_configuration_opt(x, y, TableConstraint.Z, th, q0)
                 qs.append(q)
                 #q0 = q
                 t1 = perf_counter()
