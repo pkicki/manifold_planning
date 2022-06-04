@@ -13,7 +13,7 @@ class ResDense(tf.keras.Model):
 
     def call(self, input_tensor):
         x = self.d(input_tensor)
-        y = tf.pad(input_tensor, [[0, 0], [0, 0], [0, self.nout - tf.shape(input_tensor)[-1]]], "CONSTANT")
+        y = tf.pad(input_tensor, [[0, 0], [0, self.nout - tf.shape(input_tensor)[-1]]], "CONSTANT")
         return x + y
 
 
