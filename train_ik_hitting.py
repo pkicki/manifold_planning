@@ -19,9 +19,9 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 class args:
     batch_size = 64
     working_dir = './trainings'
-    out_name = 'ik_hitting_pos_data10k_fixedtraininganddata_1em5'
+    out_name = 'ik_hitting_pos_data10k_fixedtraininganddata_5em5_lossabs'
     log_interval = 10
-    learning_rate = 1e-5
+    learning_rate = 5e-5
     dataset_path = "./data/paper/ik_hitting/train/data.tsv"
 
 train_data = np.loadtxt(args.dataset_path, delimiter='\t').astype(np.float32)
@@ -45,7 +45,7 @@ experiment_handler = ExperimentHandler(args.working_dir, args.out_name, args.log
 train_step = 0
 val_step = 0
 best_epoch_loss = 1e10
-for epoch in range(3000):
+for epoch in range(5000):
     dataset_epoch = train_ds.shuffle(train_size)
     dataset_epoch = dataset_epoch.batch(args.batch_size).prefetch(args.batch_size)
     epoch_loss = []

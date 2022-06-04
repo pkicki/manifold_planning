@@ -20,11 +20,11 @@ assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
 config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 class args:
-    batch_size = 64
+    batch_size = 32
     working_dir = './trainings'
-    out_name = 'striker_lr1em6_t1e0_z1e2'
+    out_name = 'striker_bs32_lr5em5_t1e0_z1e2_N15'
     log_interval = 10
-    learning_rate = 1e-6
+    learning_rate = 5e-5
     dataset_path = "./data/paper/airhockey_table_moves/train/data.tsv"
 
 
