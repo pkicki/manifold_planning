@@ -10,14 +10,10 @@ sys.path.insert(0, os.path.dirname(parentdir))
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 import numpy as np
-import tensorflow as tf
-from utils.constants import TableConstraint, Limits
-
-from models.pos import PosSup
-from utils.execution import ExperimentHandler
+from utils.constants import Limits
 
 from data.spo import StartPointOptimizer
-from data.velocity_projection import VelocityProjector
+from utils.velocity_projection import VelocityProjector
 
 
 urdf_path = os.path.join(os.path.dirname(__file__), "../iiwa.urdf")

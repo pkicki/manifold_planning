@@ -17,7 +17,7 @@ from models.iiwa_ik_hitting import IiwaIKHitting
 from utils.execution import ExperimentHandler
 
 from data.spo import StartPointOptimizer
-from data.velocity_projection import VelocityProjector
+from utils.velocity_projection import VelocityProjector
 
 
 def generate_hitting_directions(x, y):
