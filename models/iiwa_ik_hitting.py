@@ -2,19 +2,6 @@ import tensorflow as tf
 import numpy as np
 
 from utils.normalize import normalize_xy
-from utils.preprocessing import gamma
-
-
-class ResDense(tf.keras.Model):
-    def __init__(self, nout, act):
-        super(ResDense, self).__init__(name='')
-        self.d = tf.keras.layers.Dense(nout, activation=act)
-        self.nout = nout
-
-    def call(self, input_tensor):
-        x = self.d(input_tensor)
-        y = tf.pad(input_tensor, [[0, 0], [0, self.nout - tf.shape(input_tensor)[-1]]], "CONSTANT")
-        return x + y
 
 
 class IiwaIKHitting(tf.keras.Model):
@@ -25,12 +12,12 @@ class IiwaIKHitting(tf.keras.Model):
 
         activation = tf.keras.activations.tanh
         self.fc = [
-            ResDense(2048, activation),
-            ResDense(2048, activation),
-            ResDense(2048, activation),
-            ResDense(2048, activation),
-            ResDense(2048, activation),
-            ResDense(2048, activation),
+            tf.keras.layers.Dense(2048, activation),
+            tf.keras.layers.Dense(2048, activation),
+            tf.keras.layers.Dense(2048, activation),
+            tf.keras.layers.Dense(2048, activation),
+            tf.keras.layers.Dense(2048, activation),
+            tf.keras.layers.Dense(2048, activation),
             tf.keras.layers.Dense(self.n_dof, activation),
         ]
 
