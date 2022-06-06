@@ -15,8 +15,8 @@ class TableConstraint:
 
 
 class Limits:
-    q_dot = np.array([1.4835, 1.4835, 1.7453, 1.3090, 2.2689, 2.3562], dtype=np.float32)
-    q_ddot = np.array([10., 10., 10., 10., 10., 10.], dtype=np.float32)
+    q_dot = 0.8 * np.array([1.4835, 1.4835, 1.7453, 1.3090, 2.2689, 2.3562], dtype=np.float32)
+    q_ddot = 0.8 * np.array([10., 10., 10., 10., 10., 10.], dtype=np.float32)
 
 
 class Base:
