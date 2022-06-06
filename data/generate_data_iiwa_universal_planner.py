@@ -16,7 +16,7 @@ from utils.constants import TableConstraint, Limits, UrdfModels
 from models.iiwa_ik_hitting import IiwaIKHitting
 from utils.execution import ExperimentHandler
 
-from data.spo import StartPointOptimizer
+from utils.spo import StartPointOptimizer
 from utils.velocity_projection import VelocityProjector
 
 

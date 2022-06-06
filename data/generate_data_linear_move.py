@@ -12,7 +12,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import numpy as np
 from utils.constants import Limits
 
-from data.spo import StartPointOptimizer
+from utils.spo import StartPointOptimizer
 from utils.velocity_projection import VelocityProjector
 
 
