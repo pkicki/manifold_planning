@@ -13,7 +13,8 @@ from utils.dataset import _ds
 from utils.execution import ExperimentHandler
 from utils.plotting import plot_qs
 from losses.linear_move import LinearMoveLoss
-from utils.constants import Limits, TableConstraint
+from utils.constants import Limits, TableConstraint, UrdfModels
+
 
 # physical_devices = tf.config.experimental.list_physical_devices('GPU')
 # assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
@@ -32,7 +33,7 @@ train_data = np.loadtxt("./data/paper/linear_move/train/data.tsv", delimiter='\t
 train_size = train_data.shape[0]
 train_ds = tf.data.Dataset.from_tensor_slices(train_data)
 
-urdf_path = os.path.join(os.path.dirname(__file__), "iiwa.urdf")
+urdf_path = os.path.join(os.path.dirname(__file__), UrdfModels.iiwa)
 
 N = 15
 opt = tf.keras.optimizers.Adam(args.learning_rate)

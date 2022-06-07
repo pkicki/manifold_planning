@@ -27,3 +27,4 @@ class Base:
 
 class UrdfModels:
     striker = "iiwa_striker_new.urdf"
+    iiwa = "iiwa.urdf"

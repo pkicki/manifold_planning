@@ -2,10 +2,13 @@ from losses.feasibility import FeasibilityLoss
 from utils.data import unpack_data_boundaries, unpack_data_linear_move
 import tensorflow as tf
 
+from utils.manipulator import Iiwa
+
 
 class LinearMoveLoss(FeasibilityLoss):
     def __init__(self, N, urdf_path, q_dot_limits, q_ddot_limits):
         super(LinearMoveLoss, self).__init__(N, urdf_path, q_dot_limits, q_ddot_limits)
+        self.man = Iiwa(urdf_path)
 
     def call(self, q_cps, t_cps, data):
         q0, xyz0, xyzk, q_dot_0, q_ddot_0 = unpack_data_linear_move(data, 7)

@@ -7,9 +7,9 @@ from manifold_planning.models.iiwa_planner_boundaries import IiwaPlannerBoundari
 from manifold_planning.models.iiwa_ik_hitting import IiwaIKHitting
 
 
-def load_model(path, N):
-    model = IiwaPlanner(N)
-    model(np.zeros([1, 23]))
+def load_model(path, N, n_pts_fixed_begin, bsp, bsp_t):
+    model = IiwaPlanner(N, n_pts_fixed_begin, bsp, bsp_t)
+    model(np.zeros([1, 30]))
     checkpoint = tf.train.Checkpoint(model=model)
     checkpoint.restore(path).expect_partial()
     return model
