@@ -1,5 +1,7 @@
 from losses.feasibility import FeasibilityLoss
+from losses.utils import huber
 from utils.manipulator import Iiwa
+import tensorflow as tf
 
 
 class HittingLoss(FeasibilityLoss):
@@ -13,6 +15,8 @@ class HittingLoss(FeasibilityLoss):
 
         xyz = self.man.forward_kinematics(q)
         constraint_loss = self.end_effector_constraints_distance_function(xyz)
+        t_loss = huber(t[:, tf.newaxis])
+        losses = tf.concat([q_dot_loss, q_ddot_loss, constraint_loss, t_loss], axis=-1)
 
-        model_loss = constraint_loss + q_dot_loss + q_ddot_loss + t
+        model_loss = tf.reduce_sum(losses, axis=-1)
         return model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum
