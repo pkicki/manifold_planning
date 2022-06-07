@@ -3,6 +3,8 @@ from time import time
 import numpy as np
 from scipy import optimize as spo
 import pinocchio as pino
+
+from utils.constants import UrdfModels, TableConstraint
 from utils.manipulator import Iiwa
 
 
@@ -41,9 +43,11 @@ class StartPointOptimizer:
 
 if __name__ == "__main__":
     #urdf_path = "../../iiwa_striker.urdf"
-    urdf_path = "../iiwa.urdf"
-    point = np.array([0.3, -0.4, 0.2])
-    po = StartPointOptimizer(urdf_path, 7)
+    #urdf_path = "../iiwa.urdf"
+    urdf_path = "../" + UrdfModels.striker
+    point = np.array([0.65, 0.0, TableConstraint.Z])
+    #po = StartPointOptimizer(urdf_path, 7)
+    po = StartPointOptimizer(urdf_path)
     q = po.solve(point)
     pino.forwardKinematics(po.model, po.data, np.pad(q, (0, po.n - len(q)), mode='constant'))
     x = po.data.oMi[-1].translation
