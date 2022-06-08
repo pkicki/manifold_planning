@@ -22,7 +22,7 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 class args:
     batch_size = 64
     working_dir = './trainings'
-    out_name = 'striker_bs64_lr5em5_huberloss_alphatraining'
+    out_name = 'striker_bs64_lr5em5_N15_huberloss_alphatraining'
     log_interval = 10
     learning_rate = 5e-5
     dataset_path = "./data/paper/airhockey_table_moves/train/data.tsv"
@@ -57,7 +57,6 @@ for epoch in range(30000):
     constraint_losses = []
     q_dot_losses = []
     q_ddot_losses = []
-    alphas = [0., 0., 0.]
     for i, d in _ds('Train', dataset_epoch, train_size, epoch, args.batch_size):
         with tf.GradientTape() as tape:
             q_cps, t_cps = model(d)
