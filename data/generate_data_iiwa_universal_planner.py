@@ -16,8 +16,8 @@ from utils.constants import TableConstraint, Limits, UrdfModels
 from models.iiwa_ik_hitting import IiwaIKHitting
 from utils.execution import ExperimentHandler
 
-from data.spo import StartPointOptimizer
-from data.velocity_projection import VelocityProjector
+from utils.spo import StartPointOptimizer
+from utils.velocity_projection import VelocityProjector
 
 
 def generate_hitting_directions(x, y):
@@ -110,7 +110,8 @@ opt = tf.keras.optimizers.Adam(1e0)
 model = IiwaIKHitting()
 experiment_handler = ExperimentHandler("./trainings", "test", 1, model, opt)
 #experiment_handler.restore(f"../trainings/velpos/porthos_pos/last_n-20")
-experiment_handler.restore(f"../trained_models/ik_hitting/pos/best-104")
+#experiment_handler.restore(f"../trained_models/ik_hitting/pos/best-104")
+experiment_handler.restore(f"../trained_models/ik_hitting/pos_lossabs/best-77")
 
 
 def get_hitting_configuration(xk, yk, thk, vz=0.):
@@ -123,7 +124,7 @@ def get_hitting_configuration(xk, yk, thk, vz=0.):
     q_dot = (pinvJ[:6, :3] @ np.array([np.cos(thk), np.sin(thk), vz])[:, np.newaxis])[:, 0]
     max_mul = np.max(np.abs(q_dot) / Limits.q_dot)
     qdotk = q_dot / max_mul
-    err = np.abs(xyz_pino - np.array([xk, yk, 0.1505]))
+    err = np.abs(xyz_pino - np.array([xk, yk, TableConstraint.Z]))
     return q[:7].tolist(), qdotk.tolist()
 
 
@@ -209,7 +210,7 @@ for i in range(N):
     data.append(q0.tolist() + qk + [xk, yk, thk] + q_dot_0.tolist() + q_ddot_0.tolist() + [0.] + q_dot_k.tolist())
     data.append(qk + q0.tolist() + [x0, y0, -th0] + q_dot_k.tolist() + q_ddot_k.tolist() + [0.] + (-q_dot_0).tolist())
 
-dir_name = f"paper/airhockey_table_moves/{ds}"
+dir_name = f"paper/airhockey_table_moves_better_ik/{ds}"
 ranges = [x0l, x0h, y0l, y0h, xkl, xkh, ykl, ykh]
 os.makedirs(dir_name, exist_ok=True)
 np.savetxt(f"{dir_name}/data_{N}_{idx}.tsv", data, delimiter='\t', fmt="%.8f")
