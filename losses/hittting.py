@@ -17,6 +17,9 @@ class HittingLoss(FeasibilityLoss):
         constraint_loss = self.end_effector_constraints_distance_function(xyz)
         t_loss = huber(t[:, tf.newaxis])
         losses = tf.concat([q_dot_loss, q_ddot_loss, constraint_loss, t_loss], axis=-1)
+        mean_q_dot_loss = tf.reduce_mean(q_dot_loss, axis=-1)
+        mean_q_ddot_loss = tf.reduce_mean(q_ddot_loss, axis=-1)
+        mean_constraint_loss = tf.reduce_mean(constraint_loss, axis=-1)
 
         model_loss = tf.reduce_sum(losses, axis=-1)
-        return model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum
+        return model_loss, mean_constraint_loss, mean_q_dot_loss, mean_q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum
