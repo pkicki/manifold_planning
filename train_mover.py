@@ -21,11 +21,10 @@ from utils.constants import Limits, TableConstraint, UrdfModels
 # config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 class args:
-    batch_size = 32
+    batch_size = 64
     working_dir = './trainings'
-    # out_name = 'lm_if1em5_errorrange_lr5em5_nosq'
-    out_name = 'lm_if1em5_errorrange_lr5em6_nosq'
-    log_interval = 5
+    out_name = 'linear_move_bs64_lr5em5_huber_alphalog_4em3_3em2_1em5_1em3'
+    log_interval = 10
     learning_rate = 5e-5
     dataset_path = "./data/paper/linear_move/train/data.tsv"
 
