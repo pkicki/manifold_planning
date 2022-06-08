@@ -19,7 +19,7 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 class args:
     batch_size = 32
     working_dir = './trainings'
-    out_name = 'ik_hitting_nopos_data10k_lr5em5_bs32_lossabs_gamma'
+    out_name = 'ik_hitting_pos_data10k_lr5em5_bs32_lossabs_resdense'
     log_interval = 10
     learning_rate = 5e-5
     dataset_path = "./data/paper/ik_hitting/train/data.tsv"
@@ -36,8 +36,8 @@ urdf_path = os.path.join(os.path.dirname(__file__), UrdfModels.striker)
 
 
 opt = tf.keras.optimizers.Adam(args.learning_rate)
-loss = IKHittingLoss()
-#loss = IKHittingPosLoss(urdf_path)
+#loss = IKHittingLoss()
+loss = IKHittingPosLoss(urdf_path)
 model = IiwaIKHitting()
 
 experiment_handler = ExperimentHandler(args.working_dir, args.out_name, args.log_interval, model, opt)
