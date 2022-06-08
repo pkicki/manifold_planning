@@ -22,9 +22,9 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 class args:
     batch_size = 64
     working_dir = './trainings'
-    out_name = 'xD'
-    log_interval = 5
-    learning_rate = 1e-6
+    out_name = 'striker_bs64_lr5em5_huberloss_alphatraining'
+    log_interval = 10
+    learning_rate = 5e-5
     dataset_path = "./data/paper/airhockey_table_moves/train/data.tsv"
 
 
@@ -54,6 +54,10 @@ for epoch in range(30000):
     dataset_epoch = dataset_epoch.batch(args.batch_size).prefetch(args.batch_size)
     epoch_loss = []
     experiment_handler.log_training()
+    constraint_losses = []
+    q_dot_losses = []
+    q_ddot_losses = []
+    alphas = [0., 0., 0.]
     for i, d in _ds('Train', dataset_epoch, train_size, epoch, args.batch_size):
         with tf.GradientTape() as tape:
             q_cps, t_cps = model(d)
@@ -62,6 +66,9 @@ for epoch in range(30000):
         grads = tape.gradient(model_loss, model.trainable_variables)
         opt.apply_gradients(zip(grads, model.trainable_variables))
 
+        constraint_losses.append(constraint_loss)
+        q_dot_losses.append(q_dot_loss)
+        q_ddot_losses.append(q_ddot_loss)
         epoch_loss.append(model_loss)
         with tf.summary.record_if(train_step % args.log_interval == 0):
             tf.summary.scalar('metrics/model_loss', tf.reduce_mean(model_loss), step=train_step)
@@ -71,6 +78,14 @@ for epoch in range(30000):
             tf.summary.scalar('metrics/q_ddot_loss', tf.reduce_mean(q_ddot_loss), step=train_step)
             tf.summary.scalar('metrics/t', tf.reduce_mean(t), step=train_step)
         train_step += 1
+
+    constraint_losses = tf.reduce_mean(tf.concat(constraint_losses, -1))
+    q_dot_losses = tf.reduce_mean(tf.concat(q_dot_losses, -1))
+    q_ddot_losses = tf.reduce_mean(tf.concat(q_ddot_losses, -1))
+    loss.alpha_update(q_dot_losses, q_ddot_losses, constraint_losses)
+
+
+
 
     #w = 10
     #if epoch % w == w - 1:
@@ -82,6 +97,9 @@ for epoch in range(30000):
 
     with tf.summary.record_if(True):
         tf.summary.scalar('epoch/loss', epoch_loss, step=epoch)
+        tf.summary.scalar('epoch/alpha_q_dot', loss.alpha_q_dot, step=epoch)
+        tf.summary.scalar('epoch/alpha_q_ddot', loss.alpha_q_ddot, step=epoch)
+        tf.summary.scalar('epoch/alpha_constraint', loss.alpha_constraint, step=epoch)
 
     # validation
     dataset_epoch = val_ds.shuffle(val_size)
