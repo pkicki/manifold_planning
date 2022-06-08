@@ -23,5 +23,5 @@ def unpack_data_linear_move(x, n):
     xyz0 = x[:, n:n + 3]
     xyzk = x[:, n + 3:n + 6]
     q_dot_0 = x[:, n + 6: 2 * n + 5]
-    q_ddot_0 = x[:, 2 * n + 5: 3 * n + 4]
+    q_ddot_0 = x[:, 2 * n + 6: 3 * n + 5]
     return q0, xyz0, xyzk, q_dot_0, q_ddot_0
