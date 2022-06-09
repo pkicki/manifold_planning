@@ -4,8 +4,9 @@ from time import perf_counter
 
 import pinocchio as pino
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
-from utils.hpo import get_hitting_configuration_opt as ghc
+from utils.hpo_interface import get_hitting_configuration_opt as ghc
 from utils.spo import StartPointOptimizer
 from utils.velocity_projection import VelocityProjector
 from utils.bspline import BSpline
@@ -42,7 +43,8 @@ loss = HittingLoss(N, urdf_path, air_hockey_table, Limits.q_dot, Limits.q_ddot)
 model = IiwaPlannerBoundaries(N, 3, 2, loss.bsp, loss.bsp_t)
 ckpt_striker = tf.train.Checkpoint(model=model)
 #ckpt_striker.restore("./trained_models/striker/best-60")
-ckpt_striker.restore("./trained_models/striker/v08a08z1e3/best-157")
+#ckpt_striker.restore("./trained_models/striker/v08a08z1e3/best-157")
+ckpt_striker.restore("./trained_models/striker/v08a08huberalpha/best-192")
 
 hpo_model = IiwaIKHitting()
 ckpt_hpo = tf.train.Checkpoint(model=hpo_model)

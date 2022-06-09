@@ -8,7 +8,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 sys.path.insert(0, os.path.dirname(parentdir))
 
-from utils.hpo import get_hitting_configuration_opt
+from utils.hpo_interface import get_hitting_configuration_opt
 from utils.constants import TableConstraint, UrdfModels
 from utils.manipulator import Iiwa
 
