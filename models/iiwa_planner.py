@@ -62,7 +62,7 @@ class IiwaPlanner(tf.keras.Model):
         q = pi * tf.reshape(q_est, (-1, self.N, self.n_dof))
 
         q1 = q_dot_0 / dtau_dt[:, :1] / self.qd1 + q0
-        q2 = ((q_ddot_0 - self.qd1 * self.td1 * (q1 - q0) * (dtau_dt[:, 1] - dtau_dt[:, 0])[:, np.newaxis]) / dtau_dt[:, :1]
+        q2 = ((q_ddot_0 / dtau_dt[:, :1] - self.qd1 * self.td1 * (q1 - q0) * (dtau_dt[:, 1] - dtau_dt[:, 0])[:, np.newaxis]) / dtau_dt[:, :1]
               - self.qdd1 * q0 - self.qdd2 * q1) / self.qdd3
 
         q0 = q0[:, tf.newaxis]
