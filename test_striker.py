@@ -44,7 +44,7 @@ model = IiwaPlannerBoundaries(N, 3, 2, loss.bsp, loss.bsp_t)
 ckpt_striker = tf.train.Checkpoint(model=model)
 #ckpt_striker.restore("./trained_models/striker/best-60")
 #ckpt_striker.restore("./trained_models/striker/v08a08z1e3/best-157")
-ckpt_striker.restore("./trained_models/striker/v08a08huberalpha/best-192")
+ckpt_striker.restore("./trained_models/striker/v08a08huberalpha/best-133")
 
 hpo_model = IiwaIKHitting()
 ckpt_hpo = tf.train.Checkpoint(model=hpo_model)

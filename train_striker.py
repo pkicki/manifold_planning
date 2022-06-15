@@ -1,6 +1,6 @@
 import os
 
-#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 import tensorflow as tf
 import numpy as np
@@ -15,9 +15,9 @@ from models.iiwa_planner_boundaries import IiwaPlannerBoundaries
 from utils.constants import Limits, TableConstraint, UrdfModels
 
 
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
-config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
+#physical_devices = tf.config.experimental.list_physical_devices('GPU')
+#assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
+#config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 class args:
     batch_size = 64
@@ -28,11 +28,11 @@ class args:
     dataset_path = "./data/paper/airhockey_table_moves/train/data.tsv"
 
 
-train_data = np.loadtxt(args.dataset_path, delimiter='\t').astype(np.float32)
+train_data = np.loadtxt(args.dataset_path.replace("train", "val"), delimiter='\t').astype(np.float32)[:10]
 train_size = train_data.shape[0]
 train_ds = tf.data.Dataset.from_tensor_slices(train_data)
 
-val_data = np.loadtxt(args.dataset_path.replace("train", "val"), delimiter='\t').astype(np.float32)
+val_data = np.loadtxt(args.dataset_path.replace("train", "val"), delimiter='\t').astype(np.float32)[:10]
 val_size = val_data.shape[0]
 val_ds = tf.data.Dataset.from_tensor_slices(val_data)
 

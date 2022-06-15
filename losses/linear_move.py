@@ -26,21 +26,21 @@ class LinearMoveLoss(FeasibilityLoss):
         xyzk = xyzk[..., tf.newaxis]
 
         t_end = 2.
-        x_range = tf.linspace(0.1, 0.02, tf.shape(t_cumsum)[-1])[tf.newaxis]
-        y_range = tf.linspace(0.1, 0.02, tf.shape(t_cumsum)[-1])[tf.newaxis]
-        z_range = tf.linspace(0.1, 0.02, tf.shape(t_cumsum)[-1])[tf.newaxis]
+        d0 = 0.1
+        d1 = 0.02
+        d_range_v = (d1 - d0) / t_end
         vx = (xyzk[:, 0] - xyz0[:, 0]) / t_end
         vy = (xyzk[:, 1] - xyz0[:, 1]) / t_end
         vz = (xyzk[:, 2] - xyz0[:, 2]) / t_end
 
-        xlow = xyz0[:, 0] - x_range + vx * t_cumsum
-        xhigh = xyz0[:, 0] + x_range + vx * t_cumsum
+        xlow = xyz0[:, 0] - (d0 + d_range_v * t_cumsum) + vx * t_cumsum
+        xhigh = xyz0[:, 0] + d0 + d_range_v * t_cumsum + vx * t_cumsum
 
-        ylow = xyz0[:, 1] - y_range + vy * t_cumsum
-        yhigh = xyz0[:, 1] + y_range + vy * t_cumsum
+        ylow = xyz0[:, 1] - (d0 + d_range_v * t_cumsum) + vy * t_cumsum
+        yhigh = xyz0[:, 1] + d0 + d_range_v * t_cumsum + vy * t_cumsum
 
-        zlow = xyz0[:, 2] - z_range + vz * t_cumsum
-        zhigh = xyz0[:, 2] + z_range + vz * t_cumsum
+        zlow = xyz0[:, 2] - (d0 + d_range_v * t_cumsum) + vz * t_cumsum
+        zhigh = xyz0[:, 2] + d0 + d_range_v * t_cumsum + vz * t_cumsum
 
         huber_along_path = lambda x: tf.reduce_mean(huber(x), axis=-1)
         relu_huber_along_path = lambda x: huber_along_path(tf.nn.relu(x))
