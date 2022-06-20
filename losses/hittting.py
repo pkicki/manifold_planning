@@ -12,6 +12,10 @@ class HittingLoss(FeasibilityLoss):
         self.alpha_constraint = 0.
         self.alpha_q_dot = 0.
         self.alpha_q_ddot = 0.
+        self.gamma = 1e-2
+        self.bar_constraint = 1e-6
+        self.bar_q_dot = 1e-3
+        self.bar_q_ddot = 1e-2
 
     def call(self, q_cps, t_cps, data):
         _, q_dot_loss, q_ddot_loss, q, q_dot, q_ddot, t, t_cumsum = super().call(q_cps, t_cps, data)
@@ -29,10 +33,9 @@ class HittingLoss(FeasibilityLoss):
         return model_loss, mean_constraint_loss, mean_q_dot_loss, mean_q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum
 
     def alpha_update(self, q_dot_loss, q_ddot_loss, constraint_loss):
-        gamma = 1e-3
-        alpha_q_dot_update = gamma * (q_dot_loss - 4e-3)
-        alpha_q_ddot_update = gamma * (q_ddot_loss - 3e-2)
-        alpha_constraint_update = gamma * (constraint_loss - 1e-5)
+        alpha_q_dot_update = self.gamma * tf.math.log(q_dot_loss / self.bar_q_dot)
+        alpha_q_ddot_update = self.gamma * tf.math.log(q_ddot_loss / self.bar_q_ddot)
+        alpha_constraint_update = self.gamma * tf.math.log(constraint_loss / self.bar_constraint)
         self.alpha_q_dot += alpha_q_dot_update
         self.alpha_q_ddot += alpha_q_ddot_update
         self.alpha_constraint += alpha_constraint_update
