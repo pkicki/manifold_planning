@@ -19,12 +19,12 @@ class HittingLoss(FeasibilityLoss):
         self.alpha_q_ddot = 0.
         self.lambdas = np.array([1., 1., 1.])
         self.gamma = 1e-2
-        self.bar_constraint = 1e-6
-        self.bar_q_dot = 1e-3
-        self.bar_q_ddot = 1e-2
-        #self.bar_constraint = 5e-6
-        #self.bar_q_dot = 6e-3
-        #self.bar_q_ddot = 6e-2
+        #self.bar_constraint = 1e-6
+        #self.bar_q_dot = 1e-3
+        #self.bar_q_ddot = 1e-2
+        self.bar_constraint = 5e-6
+        self.bar_q_dot = 6e-3
+        self.bar_q_ddot = 6e-2
 
     def call(self, q_cps, t_cps, data):
         _, q_dot_loss, q_ddot_loss, q, q_dot, q_ddot, t, t_cumsum = super().call(q_cps, t_cps, data)
@@ -47,12 +47,12 @@ class HittingLoss(FeasibilityLoss):
                             tf.exp(self.alpha_q_ddot) * q_ddot_loss,
                             tf.exp(self.alpha_constraint) * constraint_loss,
                             t_loss], axis=-1)
-        mean_q_dot_loss = tf.reduce_mean(q_dot_loss, axis=-1)
-        mean_q_ddot_loss = tf.reduce_mean(q_ddot_loss, axis=-1)
-        mean_constraint_loss = tf.reduce_mean(constraint_loss, axis=-1)
+        sum_q_dot_loss = tf.reduce_sum(q_dot_loss, axis=-1)
+        sum_q_ddot_loss = tf.reduce_sum(q_ddot_loss, axis=-1)
+        sum_constraint_loss = tf.reduce_sum(constraint_loss, axis=-1)
 
         model_loss = tf.reduce_sum(losses, axis=-1)
-        return model_loss, mean_constraint_loss, mean_q_dot_loss, mean_q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum
+        return model_loss, sum_constraint_loss, sum_q_dot_loss, sum_q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum
 
     def alpha_update(self, q_dot_loss, q_ddot_loss, constraint_loss):
         alpha_q_dot_update = self.gamma * tf.math.log(q_dot_loss / self.bar_q_dot)
