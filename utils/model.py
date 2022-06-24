@@ -54,20 +54,20 @@ def model_inference(model, data, bsp, bspt):
     targ = np.linspace(t[0], t[-1], n)
     s = si(targ)
 
-    #dtau_dt_bs = BSp(bspt.u, t_cps[0, :, 0], 7)
+    dtau_dt_bs = BSp(bspt.u, t_cps[0, :, 0], 7)
+    ddtau_dtt_bs = dtau_dt_bs.derivative()
     q_bs = BSp(bsp.u, q_cps[0, :], 7)
     dq_bs = q_bs.derivative()
     ddq_bs = dq_bs.derivative()
 
     q = q_bs(s)
-    q_dot = dq_bs(s)
-    q_ddot = ddq_bs(s)
+    q_dot_tau = dq_bs(s)
+    q_ddot_tau = ddq_bs(s)
+    dtau_dt = dtau_dt_bs(s)[..., np.newaxis]
+    ddtau_dtt = ddtau_dtt_bs(s)[..., np.newaxis]
     t = targ
 
-    #plt.plot(targ, q_, '*')
-    #plt.plot(t, q[0, :], '.')
-    ## plt.plot(np.linspace(0., 1., 1024), q[0, :], '--')
-    #plt.show()
+    q_dot = q_dot_tau * dtau_dt
+    q_ddot = q_ddot_tau * dtau_dt ** 2 + ddtau_dtt * q_dot_tau * dtau_dt
 
     return q, q_dot, q_ddot, t
-    #return q.numpy()[0], q_dot.numpy()[0], q_ddot.numpy()[0], t.numpy()[0]
