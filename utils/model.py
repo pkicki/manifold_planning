@@ -1,6 +1,8 @@
 from time import perf_counter
 import numpy as np
 import tensorflow as tf
+from scipy.interpolate import BSpline as BSp
+from scipy.interpolate import interp1d
 
 from manifold_planning.models.iiwa_planner import IiwaPlanner
 from manifold_planning.models.iiwa_planner_boundaries import IiwaPlannerBoundaries
@@ -46,4 +48,26 @@ def model_inference(model, data, bsp, bspt):
     ts = 1. / dtau_dt[..., 0] / 1024.
     t = tf.cumsum(np.concatenate([np.zeros_like(ts[..., :1]), ts[..., :-1]], axis=-1), axis=-1)
 
-    return q.numpy()[0], q_dot.numpy()[0], q_ddot.numpy()[0], t.numpy()[0]
+    t = np.concatenate([np.zeros((1, 1)), t[:, :-1]], axis=-1)[0]
+    si = interp1d(t, np.linspace(0., 1., 1024), axis=-1)
+    n = 100
+    targ = np.linspace(t[0], t[-1], n)
+    s = si(targ)
+
+    #dtau_dt_bs = BSp(bspt.u, t_cps[0, :, 0], 7)
+    q_bs = BSp(bsp.u, q_cps[0, :], 7)
+    dq_bs = q_bs.derivative()
+    ddq_bs = dq_bs.derivative()
+
+    q = q_bs(s)
+    q_dot = dq_bs(s)
+    q_ddot = ddq_bs(s)
+    t = targ
+
+    #plt.plot(targ, q_, '*')
+    #plt.plot(t, q[0, :], '.')
+    ## plt.plot(np.linspace(0., 1., 1024), q[0, :], '--')
+    #plt.show()
+
+    return q, q_dot, q_ddot, t
+    #return q.numpy()[0], q_dot.numpy()[0], q_ddot.numpy()[0], t.numpy()[0]
