@@ -71,4 +71,4 @@ def model_inference(model, data, bsp, bspt, uniform=False, freq=100):
         q_ddot = q_ddot_tau * dtau_dt ** 2 + ddtau_dtt * q_dot_tau * dtau_dt
 
         return q, q_dot, q_ddot, t
-    return q.numpy()[0], q_dot.numpy()[0], q_ddot.numpy()[0], t.numpy()[0], q_cps, t_cps
+    return q.numpy()[0], q_dot.numpy()[0], q_ddot.numpy()[0], t.numpy()[0], q_cps.numpy()[0], t_cps.numpy()[0]
