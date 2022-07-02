@@ -45,7 +45,7 @@ def model_inference(model, data, bsp, bspt, uniform=False, freq=100):
     q_dot = q_dot_tau * dtau_dt
     q_ddot = q_ddot_tau * dtau_dt ** 2 + ddtau_dtt * q_dot_tau * dtau_dt
 
-    ts = 1. / dtau_dt[..., 0] / 1024.
+    ts = 1. / dtau_dt[..., 0] / dtau_dt.shape[1]
     t = tf.cumsum(np.concatenate([np.zeros_like(ts[..., :1]), ts[..., :-1]], axis=-1), axis=-1)
 
     if uniform:
@@ -71,4 +71,4 @@ def model_inference(model, data, bsp, bspt, uniform=False, freq=100):
         q_ddot = q_ddot_tau * dtau_dt ** 2 + ddtau_dtt * q_dot_tau * dtau_dt
 
         return q, q_dot, q_ddot, t
-    return q.numpy()[0], q_dot.numpy()[0], q_ddot.numpy()[0], t.numpy()[0]
+    return q.numpy()[0], q_dot.numpy()[0], q_ddot.numpy()[0], t.numpy()[0], q_cps, t_cps
