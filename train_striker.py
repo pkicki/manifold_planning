@@ -20,19 +20,19 @@ from utils.constants import Limits, TableConstraint, UrdfModels
 #config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 class args:
-    batch_size = 4
+    batch_size = 64
     working_dir = './trainings'
     out_name = 'striker_bs64_lr5em5_N15_huberloss_alphatraining_constraints_integrated'
-    log_interval = 10
+    log_interval = 100
     learning_rate = 5e-5
-    dataset_path = "./data/paper/airhockey_table_moves/train/data.tsv"
+    dataset_path = "./data/paper/airhockey_table_moves_08maxvel_08maxacc/train/data.tsv"
 
 
-train_data = np.loadtxt(args.dataset_path.replace("train", "val"), delimiter='\t').astype(np.float32)[:10]
+train_data = np.loadtxt(args.dataset_path, delimiter='\t').astype(np.float32)
 train_size = train_data.shape[0]
 train_ds = tf.data.Dataset.from_tensor_slices(train_data)
 
-val_data = np.loadtxt(args.dataset_path.replace("train", "val"), delimiter='\t').astype(np.float32)[:10]
+val_data = np.loadtxt(args.dataset_path.replace("train", "val"), delimiter='\t').astype(np.float32)
 val_size = val_data.shape[0]
 val_ds = tf.data.Dataset.from_tensor_slices(val_data)
 
@@ -57,55 +57,13 @@ for epoch in range(30000):
     constraint_losses = []
     q_dot_losses = []
     q_ddot_losses = []
-    grads_L0 = []
-    grads_L1 = []
-    grads_L2 = []
-    grads_L3 = []
     for i, d in _ds('Train', dataset_epoch, train_size, epoch, args.batch_size):
         with tf.GradientTape(persistent=True) as tape:
             q_cps, t_cps = model(d)
             model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum, t_loss = loss(q_cps, t_cps, d)
-            #L1 = constraint_loss
-            #L2 = q_dot_loss
-            #L3 = q_ddot_loss
             z_loss_abs = np.mean(np.abs(xyz[..., -1, 0] - TableConstraint.Z), axis=-1)
         grads = tape.gradient(model_loss, model.trainable_variables)
         opt.apply_gradients(zip(grads, model.trainable_variables))
-        # grad w.r.t. bspline control points
-        #grad_L0 = tape.gradient(t_loss, [t_cps])
-        #grad_L1 = tape.gradient(L1, [q_cps])
-        #grad_L2 = tape.gradient(L2, [q_cps, t_cps])
-        #grad_L3 = tape.gradient(L3, [q_cps, t_cps])
-        #grad_L0 = tf.concat([tf.reshape(tf.zeros_like(grad_L2[0]), (-1, 90)), tf.reshape(grad_L0[0], (-1, 20))], axis=-1)
-        #grad_L1 = tf.concat([tf.reshape(grad_L1[0], (-1, 90)), tf.reshape(tf.zeros_like(grad_L2[1]), (-1, 20))], axis=-1)
-        #grad_L2 = tf.concat([tf.reshape(grad_L2[0], (-1, 90)), tf.reshape(grad_L2[1], (-1, 20))], axis=-1)
-        #grad_L3 = tf.concat([tf.reshape(grad_L3[0], (-1, 90)), tf.reshape(grad_L3[1], (-1, 20))], axis=-1)
-
-        ## grad w.r.t. nn params
-        #grad_L0 = tape.gradient(t_loss, model.trainable_variables)
-        #grad_L1 = tape.gradient(L1, model.trainable_variables)
-        #grad_L2 = tape.gradient(L2, model.trainable_variables)
-        #grad_L3 = tape.gradient(L3, model.trainable_variables)
-        #for i in range(len(grad_L0)):
-        #    if grad_L0[i] is None:
-        #        grad_L0[i] = tf.zeros_like(grad_L2[i])
-        #    if grad_L1[i] is None:
-        #        grad_L1[i] = tf.zeros_like(grad_L2[i])
-        #    grad_L0[i] = tf.reshape(grad_L0[i], (-1))
-        #    grad_L1[i] = tf.reshape(grad_L1[i], (-1))
-        #    grad_L2[i] = tf.reshape(grad_L2[i], (-1))
-        #    grad_L3[i] = tf.reshape(grad_L3[i], (-1))
-
-        #grad_L0 = tf.concat(grad_L0, axis=0)
-        #grad_L1 = tf.concat(grad_L1, axis=0)
-        #grad_L2 = tf.concat(grad_L2, axis=0)
-        #grad_L3 = tf.concat(grad_L3, axis=0)
-
-
-        #grads_L0.append(grad_L0)
-        #grads_L1.append(grad_L1)
-        #grads_L2.append(grad_L2)
-        #grads_L3.append(grad_L3)
 
         constraint_losses.append(constraint_loss)
         q_dot_losses.append(q_dot_loss)
@@ -124,25 +82,6 @@ for epoch in range(30000):
     q_dot_losses = tf.reduce_mean(tf.concat(q_dot_losses, 0))
     q_ddot_losses = tf.reduce_mean(tf.concat(q_ddot_losses, 0))
     loss.alpha_update(q_dot_losses, q_ddot_losses, constraint_losses)
-    #grads_L0 = tf.reduce_mean(tf.stack(grads_L0, axis=0), axis=0)
-    #grads_L1 = tf.reduce_mean(tf.stack(grads_L1, axis=0), axis=0)
-    #grads_L2 = tf.reduce_mean(tf.stack(grads_L2, axis=0), axis=0)
-    #grads_L3 = tf.reduce_mean(tf.stack(grads_L3, axis=0), axis=0)
-    #grads_L0 = tf.reduce_mean(tf.concat(grads_L0, axis=0), axis=0)
-    #grads_L1 = tf.reduce_mean(tf.concat(grads_L1, axis=0), axis=0)
-    #grads_L2 = tf.reduce_mean(tf.concat(grads_L2, axis=0), axis=0)
-    #grads_L3 = tf.reduce_mean(tf.concat(grads_L3, axis=0), axis=0)
-    #loss.alpha_update_lagrange(grads_L0, grads_L1, grads_L2, grads_L3)
-
-
-
-
-    #w = 10
-    #if epoch % w == w - 1:
-    #    plot_qs(epoch, q, q_dot, q_ddot, t_cumsum)
-    #    plt.plot(xyz[0, ..., -1, 0])
-    #    plt.savefig(f"z_{epoch:05d}.png")
-    #    plt.clf()
     epoch_loss = tf.reduce_mean(tf.concat(epoch_loss, -1))
 
     with tf.summary.record_if(True):
