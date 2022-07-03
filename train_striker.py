@@ -22,7 +22,7 @@ from utils.constants import Limits, TableConstraint, UrdfModels
 class args:
     batch_size = 4
     working_dir = './trainings'
-    out_name = 'striker_bs64_lr5em5_N15_huberloss_alphatraining'
+    out_name = 'striker_bs64_lr5em5_N15_huberloss_alphatraining_constraints_integrated'
     log_interval = 10
     learning_rate = 5e-5
     dataset_path = "./data/paper/airhockey_table_moves/train/data.tsv"
