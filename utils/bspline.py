@@ -20,7 +20,9 @@ class BSpline:
         else:
             self.N, self.dN, self.ddN = self.calculate_N()
             np.save(fname, {"N": self.N, "dN": self.dN, "ddN": self.ddN}, allow_pickle=True)
-        pass
+        self.N = self.N.astype(np.float32)
+        self.dN = self.dN.astype(np.float32)
+        self.ddN = self.ddN.astype(np.float32)
 
     def calculate_N(self):
         def N(n, t, i):
