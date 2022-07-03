@@ -11,7 +11,7 @@ def air_hockey_table(xyz):
     v = tf.sqrt(tf.reduce_sum(tf.square(xyz[:, 1:] - xyz[:, :-1]), axis=-1))
     v = v / tf.reduce_sum(v, axis=1, keepdims=True)
     xyz = xyz[:, 1:]
-    huber_along_path = lambda x: tf.reduce_mean(v * huber(x), axis=-1)
+    huber_along_path = lambda x: tf.reduce_sum(v * huber(x), axis=-1)
     relu_huber_along_path = lambda x: huber_along_path(tf.nn.relu(x))
     xlow_loss = relu_huber_along_path(table.xlb - xyz[..., 0])
     xhigh_loss = relu_huber_along_path(xyz[..., 0] - table.xrt)
