@@ -7,7 +7,8 @@ table = Table()
 
 def air_hockey_table(xyz):
     xyz = xyz[..., 0]
-    v = tf.linalg.norm(xyz[:, 1:] - xyz[:, :-1], axis=-1)
+    #v = tf.linalg.norm(xyz[:, 1:] - xyz[:, :-1], axis=-1)
+    v = tf.sqrt(tf.reduce_sum(tf.square(xyz[:, 1:] - xyz[:, :-1]), axis=-1))
     v = v / tf.reduce_sum(v, axis=1, keepdims=True)
     xyz = xyz[:, 1:]
     huber_along_path = lambda x: tf.reduce_mean(v * huber(x), axis=-1)
