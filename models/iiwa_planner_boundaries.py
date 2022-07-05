@@ -20,20 +20,21 @@ class IiwaPlannerBoundaries(tf.keras.Model):
         self.td1 = bsp_t.dN[0, 0, 1]
 
         activation = tf.keras.activations.tanh
-        self.fc = [
-            tf.keras.layers.Dense(2048, activation),
-            tf.keras.layers.Dense(2048, activation),
-            tf.keras.layers.Dense(2048, activation),
-            tf.keras.layers.Dense(2048, activation),
-            tf.keras.layers.Dense(2048, activation),
-        ]
+        #self.fc = [
+        #]
 
         self.q_est = [
+            tf.keras.layers.Dense(2048, activation),
+            tf.keras.layers.Dense(2048, activation),
+            tf.keras.layers.Dense(2048, activation),
             tf.keras.layers.Dense(2048, activation),
             tf.keras.layers.Dense(self.n_dof * self.N, activation),
         ]
 
         self.t_est = [
+            tf.keras.layers.Dense(2048, activation),
+            tf.keras.layers.Dense(2048, activation),
+            tf.keras.layers.Dense(2048, activation),
             tf.keras.layers.Dense(20, tf.math.exp, name="time_est"),
         ]
 
@@ -49,16 +50,18 @@ class IiwaPlannerBoundaries(tf.keras.Model):
         if self.n_pts_fixed_end > 1:
             xe = tf.concat([xe, q_dot_d / Limits.q_dot[np.newaxis]], axis=-1)
 
-        x = tf.concat([xb, xe], axis=-1)
+        inp = tf.concat([xb, xe], axis=-1)
 
-        for l in self.fc:
-            x = l(x)
 
-        q_est = x
+        #x = inp
+        #for l in self.fc:
+        #    x = l(x)
+
+        q_est = inp
         for l in self.q_est:
             q_est = l(q_est)
 
-        dtau_dt = x
+        dtau_dt = tf.concat([inp, q_est], axis=-1)
         for l in self.t_est:
             dtau_dt = l(dtau_dt)
 
