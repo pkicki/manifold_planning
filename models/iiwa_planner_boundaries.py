@@ -3,9 +3,9 @@ from math import pi
 import tensorflow as tf
 import numpy as np
 
-from models.utils import ResDense
 from utils.constants import Limits
 from utils.data import unpack_data_boundaries
+
 
 class IiwaPlannerBoundaries(tf.keras.Model):
     def __init__(self, N, n_pts_fixed_begin, n_pts_fixed_end, bsp, bsp_t):
@@ -26,21 +26,23 @@ class IiwaPlannerBoundaries(tf.keras.Model):
             tf.keras.layers.Dense(2048, activation),
             tf.keras.layers.Dense(2048, activation),
             tf.keras.layers.Dense(2048, activation),
+            tf.keras.layers.Dense(2048, activation),
+        ]
+
+        self.q_est = [
+            tf.keras.layers.Dense(2048, activation),
             tf.keras.layers.Dense(self.n_dof * self.N, activation),
         ]
 
         self.t_est = [
-            tf.keras.layers.Dense(2048, activation),
-            tf.keras.layers.Dense(2048, activation),
-            tf.keras.layers.Dense(2048, activation),
             tf.keras.layers.Dense(20, tf.math.exp, name="time_est"),
+            # tf.keras.layers.Dense(20, tf.math.softplus, name="time_est"),
         ]
 
     def __call__(self, x, mul=1.):
         q0, qd, xyth, q_dot_0, q_ddot_0, q_dot_d = unpack_data_boundaries(x, self.n_dof + 1)
 
         expected_time = tf.reduce_max(tf.abs(qd - q0) / Limits.q_dot[np.newaxis], axis=-1)
-
 
         xb = q0 / pi
         if self.n_pts_fixed_begin > 1:
