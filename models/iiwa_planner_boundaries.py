@@ -3,6 +3,7 @@ from math import pi
 import tensorflow as tf
 import numpy as np
 
+from models.utils import ResDense
 from utils.constants import Limits
 from utils.data import unpack_data_boundaries
 
@@ -20,10 +21,7 @@ class IiwaPlannerBoundaries(tf.keras.Model):
         self.td1 = bsp_t.dN[0, 0, 1]
 
         activation = tf.keras.activations.tanh
-        #self.fc = [
-        #]
-
-        self.q_est = [
+        self.fc = [
             tf.keras.layers.Dense(2048, activation),
             tf.keras.layers.Dense(2048, activation),
             tf.keras.layers.Dense(2048, activation),
@@ -41,6 +39,9 @@ class IiwaPlannerBoundaries(tf.keras.Model):
     def __call__(self, x, mul=1.):
         q0, qd, xyth, q_dot_0, q_ddot_0, q_dot_d = unpack_data_boundaries(x, self.n_dof + 1)
 
+        expected_time = tf.reduce_max(tf.abs(qd - q0) / Limits.q_dot[np.newaxis], axis=-1)
+
+
         xb = q0 / pi
         if self.n_pts_fixed_begin > 1:
             xb = tf.concat([xb, q_dot_0 / Limits.q_dot[np.newaxis]], axis=-1)
@@ -50,20 +51,20 @@ class IiwaPlannerBoundaries(tf.keras.Model):
         if self.n_pts_fixed_end > 1:
             xe = tf.concat([xe, q_dot_d / Limits.q_dot[np.newaxis]], axis=-1)
 
-        inp = tf.concat([xb, xe], axis=-1)
+        x = tf.concat([xb, xe], axis=-1)
 
+        for l in self.fc:
+            x = l(x)
 
-        #x = inp
-        #for l in self.fc:
-        #    x = l(x)
-
-        q_est = inp
+        q_est = x
         for l in self.q_est:
             q_est = l(q_est)
 
-        dtau_dt = tf.concat([inp, q_est], axis=-1)
+        dtau_dt = x
         for l in self.t_est:
             dtau_dt = l(dtau_dt)
+
+        dtau_dt = dtau_dt / expected_time[:, tf.newaxis]
 
         q = pi * tf.reshape(q_est, (-1, self.N, self.n_dof))
         s = tf.linspace(0., 1., tf.shape(q)[1] + 2)[tf.newaxis, 1:-1, tf.newaxis]
@@ -91,4 +92,4 @@ class IiwaPlannerBoundaries(tf.keras.Model):
         qb = q_begin[-1] * (1 - s) + q_end[-1] * s
 
         x = tf.concat(q_begin + [q + qb] + q_end[::-1], axis=-2)
-        return x, dtau_dt[..., tf.newaxis] + 1e-5
+        return x, dtau_dt[..., tf.newaxis]

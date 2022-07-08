@@ -15,12 +15,16 @@ class VelocityProjector:
 
     def compute_q_dot(self, q, v_xyz, alpha):
         q = np.pad(q, (0, self.n - q.shape[0]), mode='constant')
-        pino.computeJointJacobians(self.model, self.data, q)
-        #J_36 = self.data.J[:3, :6]
-        J_36 = self.data.J
+        idx_ = self.model.getFrameId("F_striker_tip")
+        J_36 = pino.computeFrameJacobian(self.model, self.data, q, idx_, pino.LOCAL_WORLD_ALIGNED)[:3, :6]
+        #pino.computeJointJacobians(self.model, self.data, q)
+        #J_ = pino.computeJointJacobian(self.model, self.data, q, 6)
+        #J_36 = self.data.J
+        #J_36 = self.data.J
         null_J_6 = scipy.linalg.null_space(J_36)
         pinvJ_6 = np.linalg.pinv(J_36)
-        q_dot = pinvJ_6 @ v_xyz + null_J_6 @ alpha
+        q_dot = pinvJ_6 @ v_xyz[:3] + null_J_6 @ alpha
+        v = J_36 @ q_dot[:6]
         return q_dot
 
 if __name__ == "__main__":

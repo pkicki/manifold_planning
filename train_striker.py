@@ -1,6 +1,7 @@
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 import tensorflow as tf
 import numpy as np
@@ -20,12 +21,12 @@ from utils.constants import Limits, TableConstraint, UrdfModels
 #config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 class args:
-    batch_size = 64
+    batch_size = 128
     working_dir = './trainings'
     out_name = 'striker_bs64_lr5em5_N15_huberloss_alphatraining_constraints_integrated'
     log_interval = 100
     learning_rate = 5e-5
-    dataset_path = "./data/paper/airhockey_table_moves_08maxvel_08maxacc/train/data.tsv"
+    dataset_path = "./data/paper/airhockey_table_moves_v08_a10v_all/train/data.tsv"
 
 
 train_data = np.loadtxt(args.dataset_path, delimiter='\t').astype(np.float32)
@@ -53,6 +54,7 @@ for epoch in range(30000):
     dataset_epoch = train_ds.shuffle(train_size)
     dataset_epoch = dataset_epoch.batch(args.batch_size).prefetch(args.batch_size)
     epoch_loss = []
+    unscaled_epoch_loss = []
     experiment_handler.log_training()
     constraint_losses = []
     q_dot_losses = []
@@ -60,7 +62,7 @@ for epoch in range(30000):
     for i, d in _ds('Train', dataset_epoch, train_size, epoch, args.batch_size):
         with tf.GradientTape(persistent=True) as tape:
             q_cps, t_cps = model(d)
-            model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum, t_loss = loss(q_cps, t_cps, d)
+            model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss = loss(q_cps, t_cps, d)
             z_loss_abs = np.mean(np.abs(xyz[..., -1, 0] - TableConstraint.Z), axis=-1)
         grads = tape.gradient(model_loss, model.trainable_variables)
         opt.apply_gradients(zip(grads, model.trainable_variables))
@@ -69,8 +71,10 @@ for epoch in range(30000):
         q_dot_losses.append(q_dot_loss)
         q_ddot_losses.append(q_ddot_loss)
         epoch_loss.append(model_loss)
+        unscaled_epoch_loss.append(unscaled_model_loss)
         with tf.summary.record_if(train_step % args.log_interval == 0):
             tf.summary.scalar('metrics/model_loss', tf.reduce_mean(model_loss), step=train_step)
+            tf.summary.scalar('metrics/unscaled_model_loss', tf.reduce_mean(unscaled_model_loss), step=train_step)
             tf.summary.scalar('metrics/constraint_loss', tf.reduce_mean(constraint_loss / 5), step=train_step)
             tf.summary.scalar('metrics/z_loss_abs', tf.reduce_mean(z_loss_abs), step=train_step)
             tf.summary.scalar('metrics/q_dot_loss', tf.reduce_mean(q_dot_loss / 6), step=train_step)
@@ -83,9 +87,11 @@ for epoch in range(30000):
     q_ddot_losses = tf.reduce_mean(tf.concat(q_ddot_losses, 0))
     loss.alpha_update(q_dot_losses, q_ddot_losses, constraint_losses)
     epoch_loss = tf.reduce_mean(tf.concat(epoch_loss, -1))
+    unscaled_epoch_loss = tf.reduce_mean(tf.concat(unscaled_epoch_loss, -1))
 
     with tf.summary.record_if(True):
         tf.summary.scalar('epoch/loss', epoch_loss, step=epoch)
+        tf.summary.scalar('epoch/unscaled_loss', unscaled_epoch_loss, step=epoch)
         tf.summary.scalar('epoch/alpha_q_dot', loss.alpha_q_dot, step=epoch)
         tf.summary.scalar('epoch/alpha_q_ddot', loss.alpha_q_ddot, step=epoch)
         tf.summary.scalar('epoch/alpha_constraint', loss.alpha_constraint, step=epoch)
@@ -94,15 +100,18 @@ for epoch in range(30000):
     dataset_epoch = val_ds.shuffle(val_size)
     dataset_epoch = dataset_epoch.batch(args.batch_size).prefetch(args.batch_size)
     epoch_loss = []
+    unscaled_epoch_loss = []
     experiment_handler.log_validation()
     for i, d in _ds('Val', dataset_epoch, val_size, epoch, args.batch_size):
         q_cps, t_cps = model(d)
-        model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum, t_loss = loss(q_cps, t_cps, d)
+        model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss = loss(q_cps, t_cps, d)
         z_loss_abs = np.mean(np.abs(xyz[..., -1, 0] - TableConstraint.Z), axis=-1)
 
         epoch_loss.append(model_loss)
+        unscaled_epoch_loss.append(unscaled_model_loss)
         with tf.summary.record_if(val_step % args.log_interval == 0):
             tf.summary.scalar('metrics/model_loss', tf.reduce_mean(model_loss), step=val_step)
+            tf.summary.scalar('metrics/unscaled_model_loss', tf.reduce_mean(unscaled_model_loss), step=val_step)
             tf.summary.scalar('metrics/constraint_loss', tf.reduce_mean(constraint_loss / 5), step=val_step)
             tf.summary.scalar('metrics/z_loss_abs', tf.reduce_mean(z_loss_abs), step=val_step)
             tf.summary.scalar('metrics/q_dot_loss', tf.reduce_mean(q_dot_loss / 6), step=val_step)
@@ -111,13 +120,15 @@ for epoch in range(30000):
         val_step += 1
 
     epoch_loss = tf.reduce_mean(tf.concat(epoch_loss, -1))
+    unscaled_epoch_loss = tf.reduce_mean(tf.concat(unscaled_epoch_loss, -1))
 
     with tf.summary.record_if(True):
         tf.summary.scalar('epoch/loss', epoch_loss, step=epoch)
+        tf.summary.scalar('epoch/unscaled_loss', unscaled_epoch_loss, step=epoch)
 
     w = 500
     if epoch % w == w - 1:
         experiment_handler.save_last()
-    if best_epoch_loss > epoch_loss:
-        best_epoch_loss = epoch_loss
+    if best_epoch_loss > unscaled_epoch_loss:
+        best_epoch_loss = unscaled_epoch_loss
         experiment_handler.save_best()
