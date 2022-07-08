@@ -62,7 +62,7 @@ for epoch in range(30000):
     for i, d in _ds('Train', dataset_epoch, train_size, epoch, args.batch_size):
         with tf.GradientTape(persistent=True) as tape:
             q_cps, t_cps = model(d)
-            model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss = loss(q_cps, t_cps, d)
+            model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss = loss(q_cps, t_cps, d)
             z_loss_abs = np.mean(np.abs(xyz[..., -1, 0] - TableConstraint.Z), axis=-1)
         grads = tape.gradient(model_loss, model.trainable_variables)
         opt.apply_gradients(zip(grads, model.trainable_variables))
@@ -80,6 +80,7 @@ for epoch in range(30000):
             tf.summary.scalar('metrics/q_dot_loss', tf.reduce_mean(q_dot_loss / 6), step=train_step)
             tf.summary.scalar('metrics/q_ddot_loss', tf.reduce_mean(q_ddot_loss / 6), step=train_step)
             tf.summary.scalar('metrics/t', tf.reduce_mean(t), step=train_step)
+            tf.summary.scalar('metrics/jerk_loss', tf.reduce_mean(jerk_loss), step=train_step)
         train_step += 1
 
     constraint_losses = tf.reduce_mean(tf.concat(constraint_losses, 0))
@@ -104,7 +105,7 @@ for epoch in range(30000):
     experiment_handler.log_validation()
     for i, d in _ds('Val', dataset_epoch, val_size, epoch, args.batch_size):
         q_cps, t_cps = model(d)
-        model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss = loss(q_cps, t_cps, d)
+        model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss = loss(q_cps, t_cps, d)
         z_loss_abs = np.mean(np.abs(xyz[..., -1, 0] - TableConstraint.Z), axis=-1)
 
         epoch_loss.append(model_loss)
@@ -117,6 +118,7 @@ for epoch in range(30000):
             tf.summary.scalar('metrics/q_dot_loss', tf.reduce_mean(q_dot_loss / 6), step=val_step)
             tf.summary.scalar('metrics/q_ddot_loss', tf.reduce_mean(q_ddot_loss / 6), step=val_step)
             tf.summary.scalar('metrics/t', tf.reduce_mean(t), step=val_step)
+            tf.summary.scalar('metrics/jerk_loss', tf.reduce_mean(jerk_loss), step=val_step)
         val_step += 1
 
     epoch_loss = tf.reduce_mean(tf.concat(epoch_loss, -1))

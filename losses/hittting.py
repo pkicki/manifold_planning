@@ -22,6 +22,7 @@ class HittingLoss(FeasibilityLoss):
         self.bar_constraint = 5e-6
         self.bar_q_dot = 6e-3
         self.bar_q_ddot = 6e-2
+        self.jerk_mul = 1e-4
 
     def call(self, q_cps, t_cps, data):
         _, q_dot_loss, q_ddot_loss, q, q_dot, q_ddot, t, t_cumsum, dt = super().call(q_cps, t_cps, data)
@@ -29,10 +30,13 @@ class HittingLoss(FeasibilityLoss):
         xyz = self.man.forward_kinematics(q)
         constraint_loss = self.end_effector_constraints_distance_function(xyz, dt)
         t_loss = huber(t[:, tf.newaxis])
+        #t_loss = tf.square(t[:, tf.newaxis])
+        jerk_loss = tf.reduce_sum(tf.abs(q_ddot[:, 1:] - q_ddot[:, :-1]) * dt[..., 1:, tf.newaxis],
+                                  axis=(1, 2))[:, tf.newaxis]
         losses = tf.concat([tf.exp(self.alpha_q_dot) * q_dot_loss,
                             tf.exp(self.alpha_q_ddot) * q_ddot_loss,
                             tf.exp(self.alpha_constraint) * constraint_loss,
-                            t_loss], axis=-1)
+                            t_loss, self.jerk_mul * jerk_loss], axis=-1)
         unscaled_losses = tf.concat([q_dot_loss, q_ddot_loss, constraint_loss, t_loss], axis=-1)
         sum_q_dot_loss = tf.reduce_sum(q_dot_loss, axis=-1)
         sum_q_ddot_loss = tf.reduce_sum(q_ddot_loss, axis=-1)
@@ -41,7 +45,7 @@ class HittingLoss(FeasibilityLoss):
         model_loss = tf.reduce_sum(losses, axis=-1)
         unscaled_model_loss = tf.reduce_sum(unscaled_losses, axis=-1)
         #print("MLOSS:", model_loss)
-        return model_loss, sum_constraint_loss, sum_q_dot_loss, sum_q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss
+        return model_loss, sum_constraint_loss, sum_q_dot_loss, sum_q_ddot_loss, q, q_dot, q_ddot, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss
 
     def alpha_update(self, q_dot_loss, q_ddot_loss, constraint_loss):
         max_alpha_update = 10.0
