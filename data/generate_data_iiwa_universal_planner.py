@@ -3,6 +3,7 @@ import os
 import inspect
 import pinocchio as pino
 
+
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
@@ -11,7 +12,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 import numpy as np
 import tensorflow as tf
-from utils.constants import TableConstraint, Limits, UrdfModels
+from utils.constants import TableConstraint, Limits, UrdfModels, Base
 
 from models.iiwa_ik_hitting import IiwaIKHitting
 from utils.execution import ExperimentHandler
@@ -96,7 +97,7 @@ def validate_if_pose_is_reachable_with_given_velocity(x, y, v_x, v_y):
 
 def validate_if_initial_mallet_and_puck_positions_makes_hit_possible(xm, ym, xp, yp):
     """Validates if given initial mallet and puck positions enables one to plan reasonable movement"""
-    return np.sqrt((ym - yp)**2 + (xm - xp)**2) > 0.3
+    return np.sqrt((ym - yp)**2 + (xm - xp)**2) > 0.1
 
 
 urdf_path = os.path.join(os.path.dirname(__file__), "..", UrdfModels.striker)
@@ -119,9 +120,11 @@ def get_hitting_configuration(xk, yk, thk, vz=0.):
     q = np.concatenate([qk.numpy()[0], np.zeros(3)], axis=-1)
     pino.forwardKinematics(pino_model, pino_data, q)
     xyz_pino = pino_data.oMi[-1].translation
-    J = pino.computeJointJacobians(pino_model, pino_data, q)
+    idx_ = pino_model.getFrameId("F_striker_tip")
+    J = pino.computeFrameJacobian(pino_model, pino_data, q, idx_, pino.LOCAL_WORLD_ALIGNED)[:3, :6]
+    #J = pino.computeJointJacobians(pino_model, pino_data, q)
     pinvJ = np.linalg.pinv(J)
-    q_dot = (pinvJ[:6, :3] @ np.array([np.cos(thk), np.sin(thk), vz])[:, np.newaxis])[:, 0]
+    q_dot = (pinvJ @ np.array([np.cos(thk), np.sin(thk), vz])[:, np.newaxis])[:, 0]
     max_mul = np.max(np.abs(q_dot) / Limits.q_dot)
     qdotk = q_dot / max_mul
     err = np.abs(xyz_pino - np.array([xk, yk, TableConstraint.Z]))
@@ -142,7 +145,8 @@ xkl = 0.6
 xkh = 1.4
 ykl = -0.4
 ykh = 0.4
-for i in range(N):
+i = 0
+while i < N:
     x0 = (x0h - x0l) * np.random.rand() + x0l
     y0 = (y0h - y0l) * np.random.rand() + y0l
     dz0 = 0.01 * (2*np.random.rand() - 1.)
@@ -152,7 +156,6 @@ for i in range(N):
     yk = (ykh - ykl) * np.random.rand() + ykl
 
     if not validate_if_initial_mallet_and_puck_positions_makes_hit_possible(x0, y0, xk, yk):
-        i -= 1
         continue
     #if not validate_if_pose_is_possible(x0, y0, th0): continue
 
@@ -183,7 +186,6 @@ for i in range(N):
     q_dot_0 = q_dot_mul * q_dot_0
 
     if not validate_if_pose_is_reachable_with_given_velocity(x0, y0, v_xy[0] * q_dot_mul, v_xy[1] * q_dot_mul):
-        i -= 1
         continue
 
     thk = np.pi * (2 * np.random.random() - 1.)
@@ -203,14 +205,14 @@ for i in range(N):
     q_ddot_k = np.random.random() * q_ddot_k_mul * q_ddot_k
 
     if not validate_if_pose_is_reachable_with_given_velocity(xk, yk, np.cos(thk) * q_dot_mul, np.sin(thk) * q_dot_mul):
-        i -= 1
         continue
 
 
-    data.append(q0.tolist() + qk + [xk, yk, thk] + q_dot_0.tolist() + q_ddot_0.tolist() + [0.] + q_dot_k.tolist())
-    data.append(qk + q0.tolist() + [x0, y0, -th0] + q_dot_k.tolist() + q_ddot_k.tolist() + [0.] + (-q_dot_0).tolist())
+    data.append(q0.tolist() + qk + [xk, yk, thk] + q_dot_0.tolist() + [0.] + q_ddot_0.tolist() + [0.] + q_dot_k.tolist())
+    data.append(qk + q0.tolist() + [x0, y0, -th0] + q_dot_k.tolist() + [0.] + q_ddot_k.tolist() + [0.] + (-q_dot_0).tolist())
+    i += 1
 
-dir_name = f"paper/airhockey_table_moves_better_ik/{ds}"
+dir_name = f"paper/airhockey_table_moves_v08_a10v_all/{ds}"
 ranges = [x0l, x0h, y0l, y0h, xkl, xkh, ykl, ykh]
 os.makedirs(dir_name, exist_ok=True)
 np.savetxt(f"{dir_name}/data_{N}_{idx}.tsv", data, delimiter='\t', fmt="%.8f")
