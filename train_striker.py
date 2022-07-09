@@ -49,6 +49,7 @@ experiment_handler = ExperimentHandler(args.working_dir, args.out_name, args.log
 train_step = 0
 val_step = 0
 best_epoch_loss = 1e10
+best_unscaled_epoch_loss = 1e10
 for epoch in range(30000):
     # training
     dataset_epoch = train_ds.shuffle(train_size)
@@ -131,6 +132,10 @@ for epoch in range(30000):
     w = 500
     if epoch % w == w - 1:
         experiment_handler.save_last()
-    if best_epoch_loss > unscaled_epoch_loss:
-        best_epoch_loss = unscaled_epoch_loss
+    if best_unscaled_epoch_loss > unscaled_epoch_loss:
+        best_unscaled_epoch_loss = unscaled_epoch_loss
         experiment_handler.save_best()
+    else:
+        if best_epoch_loss > epoch_loss:
+            best_epoch_loss = epoch_loss
+            experiment_handler.save_best()
