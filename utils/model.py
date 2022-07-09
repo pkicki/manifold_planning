@@ -11,7 +11,7 @@ from manifold_planning.models.iiwa_ik_hitting import IiwaIKHitting
 
 def load_model(path, N, n_pts_fixed_begin, bsp, bsp_t):
     model = IiwaPlanner(N, n_pts_fixed_begin, bsp, bsp_t)
-    model(np.zeros([1, 30]))
+    model(np.zeros([1, 30], dtype=np.float32))
     checkpoint = tf.train.Checkpoint(model=model)
     checkpoint.restore(path).expect_partial()
     return model
@@ -19,7 +19,7 @@ def load_model(path, N, n_pts_fixed_begin, bsp, bsp_t):
 
 def load_model_boundaries(path, N, n_pts_fixed_begin, n_pts_fixed_end, bsp, bsp_t):
     model = IiwaPlannerBoundaries(N, n_pts_fixed_begin, n_pts_fixed_end, bsp, bsp_t)
-    model(np.zeros([1, 38]))
+    model(np.zeros([1, 38], dtype=np.float32))
     checkpoint = tf.train.Checkpoint(model=model)
     checkpoint.restore(path).expect_partial()
     return model
@@ -27,7 +27,7 @@ def load_model_boundaries(path, N, n_pts_fixed_begin, n_pts_fixed_end, bsp, bsp_
 
 def load_model_hpo(path):
     model = IiwaIKHitting()
-    model(np.zeros([1, 17]))
+    model(np.zeros([1, 17], dtype=np.float32))
     checkpoint = tf.train.Checkpoint(model=model)
     checkpoint.restore(path).expect_partial()
     return model
