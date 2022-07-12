@@ -41,7 +41,7 @@ urdf_path = os.path.join(os.path.dirname(__file__), UrdfModels.striker)
 
 N = 15
 opt = tf.keras.optimizers.Adam(args.learning_rate)
-loss = HittingLoss(N, urdf_path, air_hockey_table, Limits.q_dot, Limits.q_ddot)
+loss = HittingLoss(N, urdf_path, air_hockey_table, Limits.q_dot, Limits.q_ddot, Limits.q_dddot)
 model = IiwaPlannerBoundaries(N, 3, 2, loss.bsp, loss.bsp_t)
 
 experiment_handler = ExperimentHandler(args.working_dir, args.out_name, args.log_interval, model, opt)
@@ -60,11 +60,11 @@ for epoch in range(30000):
     constraint_losses = []
     q_dot_losses = []
     q_ddot_losses = []
-    torque_losses = []
+    q_dddot_losses = []
     for i, d in _ds('Train', dataset_epoch, train_size, epoch, args.batch_size):
         with tf.GradientTape(persistent=True) as tape:
             q_cps, t_cps = model(d)
-            model_loss, constraint_loss, q_dot_loss, q_ddot_loss, torque_loss, q, q_dot, q_ddot, torque, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss = loss(q_cps, t_cps, d)
+            model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q_dddot_loss, q, q_dot, q_ddot, q_dddot, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss = loss(q_cps, t_cps, d)
             z_loss_abs = np.mean(np.abs(xyz[..., -1, 0] - TableConstraint.Z), axis=-1)
         grads = tape.gradient(model_loss, model.trainable_variables)
         opt.apply_gradients(zip(grads, model.trainable_variables))
@@ -72,7 +72,7 @@ for epoch in range(30000):
         constraint_losses.append(constraint_loss)
         q_dot_losses.append(q_dot_loss)
         q_ddot_losses.append(q_ddot_loss)
-        torque_losses.append(torque_loss)
+        q_dddot_losses.append(q_dddot_loss)
         epoch_loss.append(model_loss)
         unscaled_epoch_loss.append(unscaled_model_loss)
         with tf.summary.record_if(train_step % args.log_interval == 0):
@@ -82,7 +82,7 @@ for epoch in range(30000):
             tf.summary.scalar('metrics/z_loss_abs', tf.reduce_mean(z_loss_abs), step=train_step)
             tf.summary.scalar('metrics/q_dot_loss', tf.reduce_mean(q_dot_loss / 6), step=train_step)
             tf.summary.scalar('metrics/q_ddot_loss', tf.reduce_mean(q_ddot_loss / 6), step=train_step)
-            tf.summary.scalar('metrics/torque_loss', tf.reduce_mean(torque_loss / 6), step=train_step)
+            tf.summary.scalar('metrics/q_dddot_loss', tf.reduce_mean(q_dddot_loss / 6), step=train_step)
             tf.summary.scalar('metrics/t', tf.reduce_mean(t), step=train_step)
             tf.summary.scalar('metrics/jerk_loss', tf.reduce_mean(jerk_loss), step=train_step)
         train_step += 1
@@ -90,8 +90,8 @@ for epoch in range(30000):
     constraint_losses = tf.reduce_mean(tf.concat(constraint_losses, 0))
     q_dot_losses = tf.reduce_mean(tf.concat(q_dot_losses, 0))
     q_ddot_losses = tf.reduce_mean(tf.concat(q_ddot_losses, 0))
-    torque_losses = tf.reduce_mean(tf.concat(torque_losses, 0))
-    loss.alpha_update(q_dot_losses, q_ddot_losses, constraint_losses, torque_losses)
+    q_dddot_losses = tf.reduce_mean(tf.concat(q_dddot_losses, 0))
+    loss.alpha_update(q_dot_losses, q_ddot_losses, constraint_losses, q_dddot_losses)
     epoch_loss = tf.reduce_mean(tf.concat(epoch_loss, -1))
     unscaled_epoch_loss = tf.reduce_mean(tf.concat(unscaled_epoch_loss, -1))
 
@@ -110,7 +110,7 @@ for epoch in range(30000):
     experiment_handler.log_validation()
     for i, d in _ds('Val', dataset_epoch, val_size, epoch, args.batch_size):
         q_cps, t_cps = model(d)
-        model_loss, constraint_loss, q_dot_loss, q_ddot_loss, torque_loss, q, q_dot, q_ddot, torque, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss = loss(q_cps, t_cps, d)
+        model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q_dddot_loss, q, q_dot, q_ddot, q_dddot, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss = loss(q_cps, t_cps, d)
         z_loss_abs = np.mean(np.abs(xyz[..., -1, 0] - TableConstraint.Z), axis=-1)
 
         epoch_loss.append(model_loss)
@@ -122,7 +122,7 @@ for epoch in range(30000):
             tf.summary.scalar('metrics/z_loss_abs', tf.reduce_mean(z_loss_abs), step=val_step)
             tf.summary.scalar('metrics/q_dot_loss', tf.reduce_mean(q_dot_loss / 6), step=val_step)
             tf.summary.scalar('metrics/q_ddot_loss', tf.reduce_mean(q_ddot_loss / 6), step=val_step)
-            tf.summary.scalar('metrics/torque_loss', tf.reduce_mean(torque_loss / 6), step=val_step)
+            tf.summary.scalar('metrics/q_dddot_loss', tf.reduce_mean(q_dddot_loss / 6), step=val_step)
             tf.summary.scalar('metrics/t', tf.reduce_mean(t), step=val_step)
             tf.summary.scalar('metrics/jerk_loss', tf.reduce_mean(jerk_loss), step=val_step)
         val_step += 1

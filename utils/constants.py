@@ -19,6 +19,7 @@ class Limits:
     #q_ddot = 0.8 * np.array([10., 10., 10., 10., 10., 10.], dtype=np.float32)
     q_ddot = 10. * q_dot
     tau = np.array([320, 320, 176, 176, 110, 40], dtype=np.float32) / 10.
+    q_dddot = 5 * q_ddot
 
 
 class Base:

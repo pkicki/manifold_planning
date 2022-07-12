@@ -17,12 +17,14 @@ class BSpline:
             self.N = d["N"]
             self.dN = d["dN"]
             self.ddN = d["ddN"]
+            self.dddN = d["dddN"]
         else:
-            self.N, self.dN, self.ddN = self.calculate_N()
-            np.save(fname, {"N": self.N, "dN": self.dN, "ddN": self.ddN}, allow_pickle=True)
+            self.N, self.dN, self.ddN, self.dddN = self.calculate_N()
+            np.save(fname, {"N": self.N, "dN": self.dN, "ddN": self.ddN, "dddN": self.dddN}, allow_pickle=True)
         self.N = self.N.astype(np.float32)
         self.dN = self.dN.astype(np.float32)
         self.ddN = self.ddN.astype(np.float32)
+        self.dddN = self.dddN.astype(np.float32)
 
     def calculate_N(self):
         def N(n, t, i):
@@ -58,6 +60,16 @@ class BSpline:
                 s -= dN(n - 1, t, i + 1) / m2
             return n * s
 
+        def dddN(n, t, i):
+            m1 = self.u[i + n] - self.u[i]
+            m2 = self.u[i + n + 1] - self.u[i + 1]
+            s = 0.
+            if m1 != 0:
+                s += ddN(n - 1, t, i) / m1
+            if m2 != 0:
+                s -= ddN(n - 1, t, i + 1) / m2
+            return n * s
+
         T = np.linspace(0., 1., self.num_T_pts)
         Ns = [np.stack([N(self.d, t, i) for i in range(self.m - self.d)]) for t in T]
         Ns = np.stack(Ns, axis=0)
@@ -71,4 +83,10 @@ class BSpline:
         ddNs[-1, -1] = 2 * self.d * (self.m - 2 * self.d) ** 2 * (self.d - 1) / 2
         ddNs[-1, -2] = -3 * self.d * (self.m - 2 * self.d) ** 2 * (self.d - 1) / 2
         ddNs[-1, -3] = self.d * (self.m - 2 * self.d) ** 2 * (self.d - 1) / 2
-        return Ns[np.newaxis], dNs[np.newaxis], ddNs[np.newaxis]
+        dddNs = [np.stack([dddN(self.d, t, i) for i in range(self.m - self.d)]) for t in T]
+        dddNs = np.stack(dddNs, axis=0)
+        dddNs[-1, -1] = 6 * self.d * (self.m - 2 * self.d) ** 3 * (self.d - 2)
+        dddNs[-1, -2] = -10.5 * self.d * (self.m - 2 * self.d) ** 3 * (self.d - 2)
+        dddNs[-1, -3] = 5.5 * self.d * (self.m - 2 * self.d) ** 3 * (self.d - 2)
+        dddNs[-1, -4] = -self.d * (self.m - 2 * self.d) ** 3 * (self.d - 2)
+        return Ns[np.newaxis], dNs[np.newaxis], ddNs[np.newaxis], dddNs[np.newaxis]
