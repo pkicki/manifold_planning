@@ -10,12 +10,13 @@ from utils.manipulator import Iiwa
 
 
 class FeasibilityLoss:
-    def __init__(self, N, urdf_path, q_dot_limits, q_ddot_limits, q_dddot_limits):
+    def __init__(self, N, urdf_path, q_dot_limits, q_ddot_limits, q_dddot_limits, torque_limits):
         self.bsp_t = BSpline(20)
         self.bsp = BSpline(N)
         self.q_dot_limits = q_dot_limits
         self.q_ddot_limits = q_ddot_limits
         self.q_dddot_limits = q_dddot_limits
+        self.torque_limits = torque_limits
         urdf_path = UrdfModels.iiwa
         self.iiwa = Iiwa(urdf_path)
         self.model = pino.buildModelFromUrdf(urdf_path)
@@ -73,7 +74,7 @@ class FeasibilityLoss:
         q_dot_limits = tf.constant(self.q_dot_limits)[tf.newaxis, tf.newaxis]
         q_ddot_limits = tf.constant(self.q_ddot_limits)[tf.newaxis, tf.newaxis]
         q_dddot_limits = tf.constant(self.q_dddot_limits)[tf.newaxis, tf.newaxis]
-        torque_limits = tf.constant(self.q_ddot_limits)[tf.newaxis, tf.newaxis]
+        torque_limits = tf.constant(self.torque_limits)[tf.newaxis, tf.newaxis]
 
         #torque = self.rnea(q, q_dot, q_ddot)
         torque = self.iiwa.rnea(q, q_dot, q_ddot)[..., :6]

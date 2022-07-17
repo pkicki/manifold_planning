@@ -44,7 +44,7 @@ urdf_path = os.path.join(os.path.dirname(__file__), UrdfModels.striker)
 
 N = 15
 opt = tf.keras.optimizers.Adam(args.learning_rate)
-loss = HittingLoss(N, urdf_path, air_hockey_table, Limits.q_dot, Limits.q_ddot, Limits.q_dddot)
+loss = HittingLoss(N, urdf_path, air_hockey_table, Limits.q_dot, Limits.q_ddot, Limits.q_dddot, Limits.tau)
 model = IiwaPlannerBoundaries(N, 3, 2, loss.bsp, loss.bsp_t)
 
 experiment_handler = ExperimentHandler(args.working_dir, args.out_name, args.log_interval, model, opt)
@@ -113,15 +113,15 @@ for epoch in range(30000):
         tf.summary.scalar('epoch/alpha_constraint', loss.alpha_constraint, step=epoch)
         tf.summary.scalar('epoch/alpha_torque', loss.alpha_torque, step=epoch)
 
-    w = 1
-    if epoch % w == w - 1:
-       plot_qs(epoch, q, q_dot, q_ddot, dt, t_cumsum)
-       plt.plot(xyz[0, ..., -1, 0])
-       plt.savefig(f"z_{epoch:05d}.png")
-       plt.clf()
-       plt.plot(xyz[0, ..., 0, 0], xyz[0, ..., 1, 0])
-       plt.savefig(f"xy_{epoch:05d}.png")
-       plt.clf()
+    #w = 1
+    #if epoch % w == w - 1:
+    #   plot_qs(epoch, q, q_dot, q_ddot, dt, t_cumsum)
+    #   plt.plot(xyz[0, ..., -1, 0])
+    #   plt.savefig(f"z_{epoch:05d}.png")
+    #   plt.clf()
+    #   plt.plot(xyz[0, ..., 0, 0], xyz[0, ..., 1, 0])
+    #   plt.savefig(f"xy_{epoch:05d}.png")
+    #   plt.clf()
 
     # validation
     dataset_epoch = val_ds.shuffle(val_size)

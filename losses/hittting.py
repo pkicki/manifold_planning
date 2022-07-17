@@ -11,8 +11,9 @@ import numpy as np
 
 
 class HittingLoss(FeasibilityLoss):
-    def __init__(self, N, urdf_path, end_effector_constraint_distance_function, q_dot_limits, q_ddot_limits, q_dddot_limits):
-        super(HittingLoss, self).__init__(N, urdf_path, q_dot_limits, q_ddot_limits, q_dddot_limits)
+    def __init__(self, N, urdf_path, end_effector_constraint_distance_function, q_dot_limits, q_ddot_limits,
+                 q_dddot_limits, torque_limits):
+        super(HittingLoss, self).__init__(N, urdf_path, q_dot_limits, q_ddot_limits, q_dddot_limits, torque_limits)
         self.end_effector_constraints_distance_function = end_effector_constraint_distance_function
         self.man = Iiwa(urdf_path)
         self.alpha_constraint = tf.math.log(1e-2)
