@@ -29,6 +29,7 @@ class HittingLoss(FeasibilityLoss):
         self.bar_q_dddot = 6e-1
         self.bar_torque = 6e-1
         self.jerk_mul = 1e-3
+        self.torque_mul = 1e-1
 
     def call(self, q_cps, t_cps, data):
         _, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, q, q_dot, q_ddot, q_dddot, torque, t, t_cumsum, dt = super().call(q_cps, t_cps, data)
@@ -39,6 +40,7 @@ class HittingLoss(FeasibilityLoss):
         t_loss = huber(t[:, tf.newaxis])
         #t_loss = tf.square(t[:, tf.newaxis])
         jerk_loss = tf.reduce_sum(tf.abs(q_dddot) * dt[..., tf.newaxis], axis=(1, 2))[:, tf.newaxis]
+        int_torque_loss = tf.reduce_sum(tf.abs(torque) * dt[..., tf.newaxis], axis=(1, 2))[:, tf.newaxis]
         #w = np.linspace(0., 1., 1024)[np.newaxis, :, np.newaxis]
         #q_dot_end_loss = tf.reduce_sum(w**2 * tf.abs(q_ddot) / Limits.q_ddot[np.newaxis, np.newaxis] * dt[..., np.newaxis], axis=(-2, -1))
         losses = tf.concat([tf.exp(self.alpha_q_dot) * q_dot_loss,
@@ -46,10 +48,11 @@ class HittingLoss(FeasibilityLoss):
                             #tf.exp(self.alpha_q_dddot) * q_dddot_loss,
                             tf.exp(self.alpha_torque) * torque_loss,
                             tf.exp(self.alpha_constraint) * constraint_loss,
-                            self.jerk_mul * jerk_loss,
+                            #self.jerk_mul * jerk_loss,
+                            self.torque_mul * int_torque_loss,
                             t_loss], axis=-1)
         #t_loss, self.jerk_mul * jerk_loss], axis = -1)
-        unscaled_losses = tf.concat([q_dot_loss, q_ddot_loss, q_dddot_loss, constraint_loss, t_loss], axis=-1)
+        unscaled_losses = tf.concat([q_dot_loss, q_ddot_loss, constraint_loss, torque_loss, t_loss], axis=-1)
         sum_q_dot_loss = tf.reduce_sum(q_dot_loss, axis=-1)
         sum_q_ddot_loss = tf.reduce_sum(q_ddot_loss, axis=-1)
         sum_q_dddot_loss = tf.reduce_sum(q_dddot_loss, axis=-1)
@@ -60,7 +63,7 @@ class HittingLoss(FeasibilityLoss):
         unscaled_model_loss = tf.reduce_sum(unscaled_losses, axis=-1)
         #print("MLOSS:", model_loss)
         return model_loss, sum_constraint_loss, sum_q_dot_loss, sum_q_ddot_loss, sum_q_dddot_loss, sum_torque_loss,\
-               q, q_dot, q_ddot, q_dddot, torque, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss
+               q, q_dot, q_ddot, q_dddot, torque, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss, int_torque_loss
         #return model_loss, sum_constraint_loss, sum_q_dot_loss, sum_q_ddot_loss, sum_torque_loss, q, q_dot, q_ddot, torque, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss
 
     def alpha_update(self, q_dot_loss, q_ddot_loss, q_dddot_loss, constraint_loss, torque_loss):
