@@ -46,13 +46,13 @@ class HittingLoss(FeasibilityLoss):
         losses = tf.concat([tf.exp(self.alpha_q_dot) * q_dot_loss,
                             tf.exp(self.alpha_q_ddot) * q_ddot_loss,
                             #tf.exp(self.alpha_q_dddot) * q_dddot_loss,
-                            tf.exp(self.alpha_torque) * torque_loss,
+                            #tf.exp(self.alpha_torque) * torque_loss,
                             tf.exp(self.alpha_constraint) * constraint_loss,
                             #self.jerk_mul * jerk_loss,
-                            self.torque_mul * int_torque_loss,
+                            #self.torque_mul * int_torque_loss,
                             t_loss], axis=-1)
         #t_loss, self.jerk_mul * jerk_loss], axis = -1)
-        unscaled_losses = tf.concat([q_dot_loss, q_ddot_loss, constraint_loss, torque_loss, t_loss], axis=-1)
+        unscaled_losses = tf.concat([q_dot_loss, q_ddot_loss, constraint_loss, t_loss], axis=-1)
         sum_q_dot_loss = tf.reduce_sum(q_dot_loss, axis=-1)
         sum_q_ddot_loss = tf.reduce_sum(q_ddot_loss, axis=-1)
         sum_q_dddot_loss = tf.reduce_sum(q_dddot_loss, axis=-1)

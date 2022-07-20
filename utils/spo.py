@@ -4,7 +4,7 @@ import numpy as np
 from scipy import optimize as spo
 import pinocchio as pino
 
-from utils.constants import UrdfModels, TableConstraint
+from utils.constants import UrdfModels, TableConstraint, Base
 from utils.manipulator import Iiwa
 
 
@@ -16,7 +16,9 @@ class StartPointOptimizer:
         self.bounds = spo.Bounds(self.model.lowerPositionLimit[:7], self.model.upperPositionLimit[:7])
 
     def solve(self, point):
-        x0 = np.array([0., 0.7135205165808098, 0., -0.5024774869152212, 0., 1.9256622406212651, 0.])
+        x0 = np.array(Base.configuration + [0.])
+        #x0 = np.array([0., 0.7135205165808098, 0., -0.5024774869152212, 0., 1.9256622406212651, 0.])
+        #x0 = np.array([0.0, 0.06580,  0.0, -1.45996, 0.,  1.22487, 0.0])
         #x0 = np.array([np.pi/3 * (2*np.random.random() - 1.),
         #               0.7135205 + 0.3 * (2*np.random.random() - 1.),
         #               np.pi/4 * (2*np.random.random() - 1.),

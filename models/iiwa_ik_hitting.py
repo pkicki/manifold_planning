@@ -12,12 +12,15 @@ class IiwaIKHitting(tf.keras.Model):
 
         activation = tf.keras.activations.tanh
         self.fc = [
-            tf.keras.layers.Dense(2048, activation),
-            tf.keras.layers.Dense(2048, activation),
-            tf.keras.layers.Dense(2048, activation),
-            tf.keras.layers.Dense(2048, activation),
-            tf.keras.layers.Dense(2048, activation),
-            tf.keras.layers.Dense(2048, activation),
+            tf.keras.layers.Dense(1024, activation),
+            tf.keras.layers.Dense(1024, activation),
+            tf.keras.layers.Dense(1024, activation),
+            #tf.keras.layers.Dense(2048, activation),
+            #tf.keras.layers.Dense(2048, activation),
+            #tf.keras.layers.Dense(2048, activation),
+            #tf.keras.layers.Dense(2048, activation),
+            #tf.keras.layers.Dense(2048, activation),
+            #tf.keras.layers.Dense(2048, activation),
             tf.keras.layers.Dense(self.n_dof, activation),
         ]
 

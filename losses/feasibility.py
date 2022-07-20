@@ -77,7 +77,8 @@ class FeasibilityLoss:
         torque_limits = tf.constant(self.torque_limits)[tf.newaxis, tf.newaxis]
 
         #torque = self.rnea(q, q_dot, q_ddot)
-        torque = self.iiwa.rnea(q, q_dot, q_ddot)[..., :6]
+        #torque = self.iiwa.rnea(q, q_dot, q_ddot)[..., :6]
+        torque = np.zeros_like(q_dddot)
 
         torque_loss_ = tf.nn.relu(tf.abs(torque) - torque_limits)
         torque_loss_ = huber(torque_loss_)
