@@ -70,7 +70,7 @@ for epoch in range(30000):
             q_cps, t_cps = model(d)
             model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, \
             q, q_dot, q_ddot, q_dddot, torque, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss, \
-            int_torque_loss = loss(q_cps, t_cps, d)
+            int_torque_loss, centrifugal_loss = loss(q_cps, t_cps, d)
             z_loss_abs = np.mean(np.abs(xyz[..., -1, 0] - TableConstraint.Z), axis=-1)
         grads = tape.gradient(model_loss, model.trainable_variables)
         opt.apply_gradients(zip(grads, model.trainable_variables))
@@ -94,6 +94,7 @@ for epoch in range(30000):
             tf.summary.scalar('metrics/q_dddot_loss', tf.reduce_mean(q_dddot_loss), step=train_step)
             tf.summary.scalar('metrics/t', tf.reduce_mean(t), step=train_step)
             tf.summary.scalar('metrics/jerk_loss', tf.reduce_mean(jerk_loss), step=train_step)
+            tf.summary.scalar('metrics/centrifugal_loss', tf.reduce_mean(centrifugal_loss), step=train_step)
         train_step += 1
 
     q_dot_losses = tf.reduce_mean(tf.concat(q_dot_losses, 0))
@@ -134,7 +135,7 @@ for epoch in range(30000):
         q_cps, t_cps = model(d)
         model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, \
         q, q_dot, q_ddot, q_dddot, torque, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss, \
-        int_torque_loss = loss(q_cps, t_cps, d)
+        int_torque_loss, centrifugal_loss = loss(q_cps, t_cps, d)
         z_loss_abs = np.mean(np.abs(xyz[..., -1, 0] - TableConstraint.Z), axis=-1)
 
         epoch_loss.append(model_loss)
@@ -151,6 +152,7 @@ for epoch in range(30000):
             tf.summary.scalar('metrics/q_dddot_loss', tf.reduce_mean(q_dddot_loss), step=val_step)
             tf.summary.scalar('metrics/t', tf.reduce_mean(t), step=val_step)
             tf.summary.scalar('metrics/jerk_loss', tf.reduce_mean(jerk_loss), step=val_step)
+            tf.summary.scalar('metrics/centrifugal_loss', tf.reduce_mean(centrifugal_loss), step=val_step)
         val_step += 1
 
     epoch_loss = tf.reduce_mean(tf.concat(epoch_loss, -1))
