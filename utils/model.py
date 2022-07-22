@@ -33,7 +33,7 @@ def load_model_hpo(path):
     return model
 
 
-def model_inference(model, data, bsp, bspt, uniform=False, freq=100):
+def model_inference(model, data, bsp, bspt, expected_time=-1., uniform=False, freq=100):
     q_cps, t_cps = model(data)
     q = bsp.N @ q_cps
     q_dot_tau = bsp.dN @ q_cps
@@ -42,11 +42,20 @@ def model_inference(model, data, bsp, bspt, uniform=False, freq=100):
     dtau_dt = bspt.N @ t_cps
     ddtau_dtt = bspt.dN @ t_cps
 
-    q_dot = q_dot_tau * dtau_dt
-    q_ddot = q_ddot_tau * dtau_dt ** 2 + ddtau_dtt * q_dot_tau * dtau_dt
-
     ts = 1. / dtau_dt[..., 0] / dtau_dt.shape[1]
     t = tf.cumsum(np.concatenate([np.zeros_like(ts[..., :1]), ts[..., :-1]], axis=-1), axis=-1)
+
+    if expected_time > 0. and expected_time > t[0, -1]:
+        ratio = t[0, -1] / expected_time
+        t_cps *= ratio
+        dtau_dt = bspt.N @ t_cps
+        ddtau_dtt = bspt.dN @ t_cps
+
+        ts = 1. / dtau_dt[..., 0] / dtau_dt.shape[1]
+        t = tf.cumsum(np.concatenate([np.zeros_like(ts[..., :1]), ts[..., :-1]], axis=-1), axis=-1)
+
+    q_dot = q_dot_tau * dtau_dt
+    q_ddot = q_ddot_tau * dtau_dt ** 2 + ddtau_dtt * q_dot_tau * dtau_dt
 
     if uniform:
         t = t[0]
