@@ -64,8 +64,9 @@ class FeasibilityLoss:
 
         q_dot = q_dot_tau * dtau_dt
         q_ddot = q_ddot_tau * dtau_dt ** 2 + ddtau_dtt * q_dot_tau * dtau_dt
-        q_dddot = q_dddot_tau * dtau_dt ** 3 + 3 * q_ddot_tau * ddtau_dtt * dtau_dt ** 2 + \
-                  q_dot_tau * dtau_dt ** 2 * dddtau_dttt + q_dot_tau * ddtau_dtt ** 2 * dtau_dt
+        #q_dddot = q_dddot_tau * dtau_dt ** 3 + 3 * q_ddot_tau * ddtau_dtt * dtau_dt ** 2 + \
+        #          q_dot_tau * dtau_dt ** 2 * dddtau_dttt + q_dot_tau * ddtau_dtt ** 2 * dtau_dt
+        q_dddot = np.zeros_like(q_ddot)
         # i = 0
         # plt.plot(t_cumsum[0], q_ddot[0, :, i])
         # plt.plot(t_cumsum[0], q_dddot[0, :, i])
@@ -77,8 +78,14 @@ class FeasibilityLoss:
         torque_limits = tf.constant(self.torque_limits)[tf.newaxis, tf.newaxis]
 
         #torque = self.rnea(q, q_dot, q_ddot)
+        rnea_q = tf.stack([q, q, q], axis=1)
+        rnea_q_dot = tf.stack([q_dot, q_dot, tf.zeros_like(q_dot)], axis=1)
+        rnea_q_ddot = tf.stack([q_dot, tf.zeros_like(q_ddot), tf.zeros_like(q_ddot)], axis=1)
+        torques = self.iiwa.rnea(rnea_q, rnea_q_dot, rnea_q_ddot)[..., :6]
+        torque = torques[:, 0]
+        centrifugal_coriolis = torques[:, 1] - torques[:, 0]
         #torque = self.iiwa.rnea(q, q_dot, q_ddot)[..., :6]
-        torque = np.zeros_like(q_dddot)
+        #torque = np.zeros_like(q_dddot)
 
         torque_loss_ = tf.nn.relu(tf.abs(torque) - torque_limits)
         torque_loss_ = huber(torque_loss_)
@@ -103,7 +110,8 @@ class FeasibilityLoss:
         q_dddot_loss = tf.reduce_sum(q_dddot_loss_ * dt[..., tf.newaxis], axis=1)  # / t[..., tf.newaxis]
         model_losses = tf.concat([q_dot_loss, q_ddot_loss, q_dddot_loss], axis=-1)
         model_loss = tf.reduce_sum(model_losses, axis=-1)
-        return model_loss, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, q, q_dot, q_ddot, q_dddot, torque, t, t_cumsum, dt
+        return model_loss, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, q, q_dot, q_ddot, q_dddot, torque,\
+               centrifugal_coriolis, t, t_cumsum, dt
 
     def __call__(self, q_cps, t_cps, data):
         return self.call(q_cps, t_cps, data)

@@ -5,7 +5,7 @@ from time import perf_counter
 import numpy as np
 import pinocchio as pino
 
-from utils.constants import Limits, UrdfModels, TableConstraint
+from utils.constants import Limits, UrdfModels, TableConstraint, Base
 import matplotlib.pyplot as plt
 
 import utils.hpo_opt as hpoo
@@ -15,9 +15,11 @@ import utils.hpo as hpo
 
 def get_hitting_configuration(x, y, z, th, q0=None):
     if q0 is None:
-        q0 = [0., 0.7135, 0., -0.5025, 0., 1.9257, 0.]
-    #s = hpoo.optimize(x, y, np.cos(th), np.sin(th), q0)
-    s = hpo.optimize(x, y, z, np.cos(th), np.sin(th), q0)
+        q0 = Base.configuration + [0.]
+        #q0 = [0.0, 0.06811, 0.0, -1.48, 0., 1.2544, 0.0]
+        #q0 = [0., 0.7135, 0., -0.5025, 0., 1.9257, 0.]
+    s = hpoo.optimize(x, y, z, np.cos(th), np.sin(th), q0)
+    #s = hpo.optimize(x, y, z, np.cos(th), np.sin(th), q0)
     q = s[:7]
     q_dot = np.array(s[7:14])
     mul = np.max(np.abs(q_dot[:6]) / Limits.q_dot)
@@ -30,7 +32,9 @@ def get_hitting_configuration(x, y, z, th, q0=None):
 
 def get_hitting_configuration_opt(x, y, z, th, q0=None):
     if q0 is None:
-        q0 = [0., 0.7135, 0., -0.5025, 0., 1.9257, 0.]
+        q0 = Base.configuration + [0.]
+        #q0 = [0.0, 0.06811, 0.0, -1.48, 0., 1.2544, 0.0]
+        #q0 = [0., 0.7135, 0., -0.5025, 0., 1.9257, 0.]
     s = hpoo.optimize(x, y, z, np.cos(th), np.sin(th), q0)
     if not s:
         return None, None, None, None

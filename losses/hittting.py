@@ -33,17 +33,18 @@ class HittingLoss(FeasibilityLoss):
         self.centrifugal_mul = 1e-1
 
     def call(self, q_cps, t_cps, data):
-        _, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, q, q_dot, q_ddot, q_dddot, torque, t, t_cumsum, dt = super().call(q_cps, t_cps, data)
+        _, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, q, q_dot, q_ddot, q_dddot, torque, centrifugal, t, t_cumsum, dt = super().call(q_cps, t_cps, data)
 
         xyz = self.man.forward_kinematics(q)
-        dx = (xyz[:, 1:, 0, 0] - xyz[:, :-1, 0, 0]) / dt[:, :-1]
-        dy = (xyz[:, 1:, 1, 0] - xyz[:, :-1, 1, 0]) / dt[:, :-1]
-        v = tf.sqrt(dx**2 + dy**2)
-        ddx = (dx[:, 1:] - dx[:, :-1]) / dt[:, :-2]
-        ddy = (dy[:, 1:] - dy[:, :-1]) / dt[:, :-2]
-        curv = (dx[:, :-1] * ddy - ddx * dy[:, :-1]) / v[:, :-1]**3
-        centrifugal = tf.abs((dx[:, :-1] * ddy - ddx * dy[:, :-1]) / (tf.abs(v[:, :-1]) + 1e-8))
-        centrifugal_loss = tf.reduce_sum(centrifugal * dt[:, 1:-1], axis=-1, keepdims=True)
+        #dx = (xyz[:, 1:, 0, 0] - xyz[:, :-1, 0, 0]) / dt[:, :-1]
+        #dy = (xyz[:, 1:, 1, 0] - xyz[:, :-1, 1, 0]) / dt[:, :-1]
+        #v = tf.sqrt(dx**2 + dy**2)
+        #ddx = (dx[:, 1:] - dx[:, :-1]) / dt[:, :-2]
+        #ddy = (dy[:, 1:] - dy[:, :-1]) / dt[:, :-2]
+        #curv = (dx[:, :-1] * ddy - ddx * dy[:, :-1]) / v[:, :-1]**3
+        #centrifugal = tf.abs((dx[:, :-1] * ddy - ddx * dy[:, :-1]) / (tf.abs(v[:, :-1]) + 1e-8))
+        #centrifugal_loss = tf.reduce_sum(centrifugal * dt[:, 1:-1], axis=-1, keepdims=True)
+        centrifugal_loss = tf.reduce_sum(tf.abs(centrifugal) * dt[..., tf.newaxis], axis=(1, 2))[:, tf.newaxis]
         constraint_loss = self.end_effector_constraints_distance_function(xyz, dt)
         t_loss = huber(t[:, tf.newaxis])
         #t_loss = tf.square(t[:, tf.newaxis])
@@ -72,7 +73,7 @@ class HittingLoss(FeasibilityLoss):
         unscaled_model_loss = tf.reduce_sum(unscaled_losses, axis=-1)
         #print("MLOSS:", model_loss)
         return model_loss, sum_constraint_loss, sum_q_dot_loss, sum_q_ddot_loss, sum_q_dddot_loss, sum_torque_loss,\
-               q, q_dot, q_ddot, q_dddot, torque, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss, int_torque_loss, centrifugal_loss
+               q, q_dot, q_ddot, q_dddot, torque, centrifugal, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss, int_torque_loss, centrifugal_loss
         #return model_loss, sum_constraint_loss, sum_q_dot_loss, sum_q_ddot_loss, sum_torque_loss, q, q_dot, q_ddot, torque, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss
 
     def alpha_update(self, q_dot_loss, q_ddot_loss, q_dddot_loss, constraint_loss, torque_loss):
