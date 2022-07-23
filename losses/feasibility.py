@@ -64,9 +64,9 @@ class FeasibilityLoss:
 
         q_dot = q_dot_tau * dtau_dt
         q_ddot = q_ddot_tau * dtau_dt ** 2 + ddtau_dtt * q_dot_tau * dtau_dt
-        #q_dddot = q_dddot_tau * dtau_dt ** 3 + 3 * q_ddot_tau * ddtau_dtt * dtau_dt ** 2 + \
-        #          q_dot_tau * dtau_dt ** 2 * dddtau_dttt + q_dot_tau * ddtau_dtt ** 2 * dtau_dt
-        q_dddot = np.zeros_like(q_ddot)
+        q_dddot = q_dddot_tau * dtau_dt ** 3 + 3 * q_ddot_tau * ddtau_dtt * dtau_dt ** 2 + \
+                  q_dot_tau * dtau_dt ** 2 * dddtau_dttt + q_dot_tau * ddtau_dtt ** 2 * dtau_dt
+        #q_dddot = np.zeros_like(q_ddot)
         # i = 0
         # plt.plot(t_cumsum[0], q_ddot[0, :, i])
         # plt.plot(t_cumsum[0], q_dddot[0, :, i])
