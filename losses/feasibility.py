@@ -83,7 +83,7 @@ class FeasibilityLoss:
         rnea_q_ddot = tf.stack([q_dot, tf.zeros_like(q_ddot), tf.zeros_like(q_ddot)], axis=1)
         torques = self.iiwa.rnea(rnea_q, rnea_q_dot, rnea_q_ddot)[..., :6]
         torque = torques[:, 0]
-        centrifugal_coriolis = torques[:, 1] - torques[:, 0]
+        centrifugal_coriolis = torques[:, 1] - torques[:, 2]
         #torque = self.iiwa.rnea(q, q_dot, q_ddot)[..., :6]
         #torque = np.zeros_like(q_dddot)
 
