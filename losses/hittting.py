@@ -47,7 +47,13 @@ class HittingLoss(FeasibilityLoss):
         #centrifugal_loss = tf.reduce_sum(centrifugal * dt[:, 1:-1], axis=-1, keepdims=True)
         #centrifugal_loss = tf.reduce_sum(tf.abs(centrifugal) * dt[..., tf.newaxis], axis=(1, 2))[:, tf.newaxis]
         t_norm = t_cumsum / t_cumsum[:, -1:]
-        threshold = tf.math.sigmoid(100. * (t_norm - 0.75))
+        a = 25.
+        b = 0.6
+        c = 0.25
+        threshold_end = (1 - c) * tf.math.sigmoid(a * (t_norm - b)) + c
+        threshold_begin = (1 - c) * tf.math.sigmoid(-a * (t_norm - (1. - b))) + c
+        threshold = tf.where(tf.abs(data[:, 18:19]) < 1e-5, threshold_begin, threshold_end)
+
         centrifugal_loss = tf.reduce_sum(tf.abs(centrifugal) * dt[..., tf.newaxis] * threshold[..., tf.newaxis],
                                          axis=(1, 2))[:, tf.newaxis]
         constraint_loss = self.end_effector_constraints_distance_function(xyz, dt)
