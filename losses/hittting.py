@@ -28,7 +28,7 @@ class HittingLoss(FeasibilityLoss):
         self.bar_q_ddot = 6e-2
         self.bar_q_dddot = 6e-1
         self.bar_torque = 6e-1
-        self.jerk_mul = 1e-3
+        self.jerk_mul = 1e-2
         self.torque_mul = 1e0
         self.centrifugal_mul = 1e0
         self.time_mul = 1e0
@@ -74,12 +74,12 @@ class HittingLoss(FeasibilityLoss):
                             #tf.exp(self.alpha_q_dddot) * q_dddot_loss,
                             #tf.exp(self.alpha_torque) * torque_loss,
                             tf.exp(self.alpha_constraint) * constraint_loss,
-                            #self.jerk_mul * jerk_loss,
+                            self.jerk_mul * jerk_loss,
                             #self.torque_mul * int_torque_loss,
                             self.centrifugal_mul * centrifugal_loss,
                             self.time_mul * t_loss], axis=-1)
         #t_loss, self.jerk_mul * jerk_loss], axis = -1)
-        unscaled_losses = tf.concat([q_dot_loss, q_ddot_loss, constraint_loss, centrifugal_loss, t_loss], axis=-1)
+        unscaled_losses = tf.concat([q_dot_loss, q_ddot_loss, constraint_loss, centrifugal_loss, jerk_loss, t_loss], axis=-1)
         sum_q_dot_loss = tf.reduce_sum(q_dot_loss, axis=-1)
         sum_q_ddot_loss = tf.reduce_sum(q_ddot_loss, axis=-1)
         sum_q_dddot_loss = tf.reduce_sum(q_dddot_loss, axis=-1)
