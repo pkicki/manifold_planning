@@ -50,16 +50,22 @@ class HittingLoss(FeasibilityLoss):
         a = 25.
         b = 0.6
         c = 0.25
-        threshold_end = (1 - c) * tf.math.sigmoid(a * (t_norm - b)) + c
-        threshold_begin = (1 - c) * tf.math.sigmoid(-a * (t_norm - (1. - b))) + c
-        threshold = tf.where(tf.abs(data[:, 18:19]) < 1e-5, threshold_begin, threshold_end)
+        threshold = (1 - c) * tf.math.sigmoid(a * (t_norm - b)) + c
+        #threshold_end = (1 - c) * tf.math.sigmoid(a * (t_norm - b)) + c
+        #threshold_begin = (1 - c) * tf.math.sigmoid(-a * (t_norm - (1. - b))) + c
+        #threshold = tf.where(tf.abs(data[:, 18:19]) < 1e-5, threshold_begin, threshold_end)
 
         centrifugal_loss = tf.reduce_sum(tf.abs(centrifugal) * dt[..., tf.newaxis] * threshold[..., tf.newaxis],
+                                         axis=(1, 2))[:, tf.newaxis]
+        d = 50.
+        e = 0.1
+        jerk_threshold = tf.math.sigmoid(-d * (t_norm - e))
+        jerk_loss = tf.reduce_sum(tf.abs(q_dddot) * dt[..., tf.newaxis] * jerk_threshold[..., tf.newaxis],
                                          axis=(1, 2))[:, tf.newaxis]
         constraint_loss = self.end_effector_constraints_distance_function(xyz, dt)
         t_loss = huber(t[:, tf.newaxis])
         #t_loss = tf.square(t[:, tf.newaxis])
-        jerk_loss = tf.reduce_sum(tf.abs(q_dddot) * dt[..., tf.newaxis], axis=(1, 2))[:, tf.newaxis]
+        #jerk_loss = tf.reduce_sum(tf.abs(q_dddot) * dt[..., tf.newaxis], axis=(1, 2))[:, tf.newaxis]
         int_torque_loss = tf.reduce_sum(tf.abs(torque) * dt[..., tf.newaxis], axis=(1, 2))[:, tf.newaxis]
         #w = np.linspace(0., 1., 1024)[np.newaxis, :, np.newaxis]
         #q_dot_end_loss = tf.reduce_sum(w**2 * tf.abs(q_ddot) / Limits.q_ddot[np.newaxis, np.newaxis] * dt[..., np.newaxis], axis=(-2, -1))
