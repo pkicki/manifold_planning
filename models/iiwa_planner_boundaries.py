@@ -42,7 +42,7 @@ class IiwaPlannerBoundaries(tf.keras.Model):
 
     def __call__(self, x, mul=1.):
         q0, qd, xyth, q_dot_0, q_ddot_0, q_dot_d = unpack_data_boundaries(x, self.n_dof + 1)
-        q_ddot_0 = np.zeros_like(q_ddot_0)
+        #q_ddot_0 = np.zeros_like(q_ddot_0)
         #q_ddot_d = np.zeros_like(q_ddot_0)
 
         expected_time = tf.reduce_max(tf.abs(qd - q0) / Limits.q_dot[np.newaxis], axis=-1)
