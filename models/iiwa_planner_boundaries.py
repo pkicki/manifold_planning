@@ -43,7 +43,7 @@ class IiwaPlannerBoundaries(tf.keras.Model):
     def __call__(self, x, mul=1.):
         q0, qd, xyth, q_dot_0, q_ddot_0, q_dot_d = unpack_data_boundaries(x, self.n_dof + 1)
         q_ddot_0 = np.zeros_like(q_ddot_0)
-        q_ddot_d = np.zeros_like(q_ddot_0)
+        #q_ddot_d = np.zeros_like(q_ddot_0)
 
         expected_time = tf.reduce_max(tf.abs(qd - q0) / Limits.q_dot[np.newaxis], axis=-1)
         a_0 = q0[:, tf.newaxis]
@@ -86,8 +86,8 @@ class IiwaPlannerBoundaries(tf.keras.Model):
         xe = qd / pi
         if self.n_pts_fixed_end > 1:
             xe = tf.concat([xe, q_dot_d / Limits.q_dot[np.newaxis]], axis=-1)
-        if self.n_pts_fixed_end > 2:
-            xe = tf.concat([xe, q_ddot_d / Limits.q_ddot[np.newaxis]], axis=-1)
+        #if self.n_pts_fixed_end > 2:
+        #    xe = tf.concat([xe, q_ddot_d / Limits.q_ddot[np.newaxis]], axis=-1)
 
         x = tf.concat([xb, xe], axis=-1)
 
@@ -113,15 +113,15 @@ class IiwaPlannerBoundaries(tf.keras.Model):
         q2 = ((q_ddot_0 / dtau_dt[:, :1] -
                self.qd1 * self.td1 * (q1 - q0) * (dtau_dt[:, 1] - dtau_dt[:, 0])[:, np.newaxis]) / dtau_dt[:, :1]
               - self.qdd1 * q0 - self.qdd2 * q1) / self.qdd3
-        qm2 = ((q_ddot_d / dtau_dt[:, -1:] -
-               self.qd1 * self.td1 * (qd - qm1) * (dtau_dt[:, -1] - dtau_dt[:, -2])[:, np.newaxis]) / dtau_dt[:, -1:]
-              - self.qdd1 * qd - self.qdd2 * qm1) / self.qdd3
+        #qm2 = ((q_ddot_d / dtau_dt[:, -1:] -
+        #       self.qd1 * self.td1 * (qd - qm1) * (dtau_dt[:, -1] - dtau_dt[:, -2])[:, np.newaxis]) / dtau_dt[:, -1:]
+        #      - self.qdd1 * qd - self.qdd2 * qm1) / self.qdd3
 
         q0 = q0[:, tf.newaxis]
         q1 = q1[:, tf.newaxis]
         q2 = q2[:, tf.newaxis]
         qm1 = qm1[:, tf.newaxis]
-        qm2 = qm2[:, tf.newaxis]
+        #qm2 = qm2[:, tf.newaxis]
         qd = qd[:, tf.newaxis]
 
         q_begin = [q0]
@@ -132,8 +132,8 @@ class IiwaPlannerBoundaries(tf.keras.Model):
         q_end = [qd]
         if self.n_pts_fixed_end > 1:
             q_end.append(qm1)
-        if self.n_pts_fixed_end > 2:
-            q_end.append(qm2)
+        #if self.n_pts_fixed_end > 2:
+        #    q_end.append(qm2)
 
         qb = q_begin[-1] * (1 - s) + q_end[-1] * s
 
