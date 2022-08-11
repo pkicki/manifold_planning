@@ -122,12 +122,12 @@ pino_data = pino_model.createData()
 #experiment_handler.restore(f"../trained_models/ik_hitting/pos_lossabs/best-53") # beyond adas1
 
 
-def get_hitting_configuration(xk, yk, thk):
+def get_hitting_configuration(xk, yk, thk, q0):
     #qk = model(np.array([xk, yk, thk])[np.newaxis])
     #q = np.concatenate([qk.numpy()[0], np.zeros(3)], axis=-1)
-    qk, q_dot_k = get_hitting_configuration_opt(xk, yk, Base.position[-1], thk)
+    qk, q_dot_k = get_hitting_configuration_opt(xk, yk, Base.position[-1], thk, q0)
     if qk is None or q_dot_k is None:
-        return None, None
+        return None, None, None
     q = np.concatenate([qk, np.zeros(2)], axis=-1)
     pino.forwardKinematics(pino_model, pino_data, q)
     xyz_pino = pino_data.oMi[-1].translation
@@ -154,11 +154,11 @@ if __name__ == "__main__":
     N = int(sys.argv[3])
 
     x0l = 0.6
-    x0h = 1.4
+    x0h = 1.25
     y0l = -0.45
     y0h = 0.45
     xkl = 0.6
-    xkh = 1.4
+    xkh = 1.25
     ykl = -0.45
     ykh = 0.45
     i = 0
@@ -183,56 +183,65 @@ if __name__ == "__main__":
         v_xyz = np.concatenate([v_xy, v_z, np.zeros(3)])
 
         point = np.array([x0, y0, TableConstraint.Z+dz0])
-        q0 = po.solve(point)
+        #qlow = np.concatenate([np.array([-np.pi/2, -np.pi/4, -np.pi/2]), -Limits.q[3:]])
+        #qhigh = np.concatenate([np.array([np.pi/2, np.pi/2, np.pi/2]), Limits.q[3:]])
+        #qlow = np.array([-np.pi/10, 0.6, -np.pi/5, -np.pi/3, -np.pi/5, 0.])
+        #qhigh = np.array([np.pi/10, np.pi/2, np.pi/5, 0.0, np.pi/5, np.pi/1.5])
+        qlow = np.array([-0.6, 0.5, -0.7, -0.7, -0.4, 0.4])
+        qhigh = np.array([0.6, 1.4, 0.7, -0.4, 0.4, 1.9])
+        qinit = qlow + np.random.random(6) * (qhigh - qlow)
+        q0 = po.solve(point, qinit)
         alpha = 2 * np.random.random(3) - 1.
-        q_dot_0 = vp.compute_q_dot(q0, v_xyz, alpha)[:7]
+        #q_dot_0 = vp.compute_q_dot(q0, v_xyz, alpha)[:7]
+        v_xyz_scale = np.array([1., 1., 0.05])
+        q_dot_0 = vp.compute_q_dot(q0, v_xyz_scale)
 
-        dth = 0.02 * (2 * np.random.random() - 1)
-        v_xy_ = (0.1*np.random.random() + 0.95) * np.array([np.cos(th0+dth), np.sin(th0+dth)])
-        v_z_ = v_z + 0.02 * (2 * np.random.random(1) - 1)
-        v_xyz_ = np.concatenate([v_xy_, v_z_, np.zeros(3)])
-        alpha_ = alpha + 0.2 * (2 * np.random.random(3) - 1.)
-        q_dot_0_ = vp.compute_q_dot(q0, v_xyz_, alpha_)[:7]
-        q_ddot_0 = (q_dot_0_ - q_dot_0)[:6]
-        q_ddot_0_mul = np.min(Limits.q_ddot / np.abs(q_ddot_0))
-        q_ddot_0 = np.random.random() * q_ddot_0_mul * q_ddot_0 * qddot_violation
+        #dth = 0.02 * (2 * np.random.random() - 1)
+        #v_xy_ = (0.1*np.random.random() + 0.95) * np.array([np.cos(th0+dth), np.sin(th0+dth)])
+        #v_z_ = v_z + 0.02 * (2 * np.random.random(1) - 1)
+        #v_xyz_ = np.concatenate([v_xy_, v_z_, np.zeros(3)])
+        #alpha_ = alpha + 0.2 * (2 * np.random.random(3) - 1.)
+        #q_dot_0_ = vp.compute_q_dot(q0, v_xyz_, alpha_)[:7]
+        #q_ddot_0 = (q_dot_0_ - q_dot_0)[:6]
 
         ql = Limits.q_dot
         max_gain = np.min(ql / np.abs(q_dot_0[:6]))
         q_dot_mul = max_gain * np.random.random()
-        if np.random.random() < 0.2:
-            q_dot_mul = 0.
+        #if np.random.random() < 0.2:
+        #    q_dot_mul = 0.
         q_dot_0 = q_dot_mul * q_dot_0 * qdot_violation
 
         if not validate_if_pose_is_reachable_with_given_velocity(x0, y0, v_xy[0] * q_dot_mul, v_xy[1] * q_dot_mul):
             continue
 
-        #thk = np.pi / 2 * (2 * np.random.random() - 1.)
-        #thk = np.pi/2 - 0.1
+        a_xyz_scale = np.array([1., 1., 0.1])
+        q_ddot_0 = vp.compute_q_ddot(q0, q_dot_0, a_xyz_scale)
+        q_ddot_0_mul = np.min(Limits.q_ddot / np.abs(q_ddot_0))
+        q_ddot_0 = np.random.random() * q_ddot_0_mul * q_ddot_0 * qddot_violation
+
         thk = np.pi * (2 * np.random.random() - 1.)
-        #xg = 2.49
-        #yg = 0.
-        # Direction 1: straight
-        #thk = np.arctan2(yg - yk, xg - xk) + 0.3 * (2*np.random.random() - 1.)
-        qk, q_dot_k, vk = get_hitting_configuration(xk, yk, thk)
+        qk, q_dot_k, vk = get_hitting_configuration(xk, yk, thk, q0.tolist())
         if qk is None or q_dot_k is None:
             continue
         q_dot_k = np.array(q_dot_k)
         max_gain = np.min(ql / np.abs(q_dot_k[:6]))
         q_dot_mul = max_gain * np.random.random()
-        if np.random.random() < 0.5:
-            q_dot_mul = max_gain
-        q_dot_k = q_dot_mul * q_dot_k
+        #if np.random.random() < 0.5:
+        #    q_dot_mul = max_gain
+        q_dot_k = q_dot_mul * q_dot_k * qdot_violation
 
-        vk_angle = np.arctan2(vk[1], vk[0]) + (0.2 * np.random.random() - 0.1)
-        vk_mag = np.linalg.norm(vk) * (0.1 * np.random.random() + 0.95)
-        vk_ = vk_mag * np.array([np.cos(vk_angle), np.sin(vk_angle), 0.01 * (2 * np.random.random() - 1.)])
-        alpha = 2 * np.random.random(3) - 1.
-        q_dot_k_ = vp.compute_q_dot(np.array(qk), vk_, alpha)[:6]
-        if q_dot_k_ is None:
-            continue
-        q_dot_k_ = q_dot_mul * np.array(q_dot_k_)
-        q_ddot_k = (np.array(q_dot_k_) - q_dot_k)
+        #vk_angle = np.arctan2(vk[1], vk[0]) + (0.2 * np.random.random() - 0.1)
+        #vk_mag = np.linalg.norm(vk) * (0.1 * np.random.random() + 0.95)
+        #vk_ = vk_mag * np.array([np.cos(vk_angle), np.sin(vk_angle), 0.01 * (2 * np.random.random() - 1.)])
+        #alpha = 2 * np.random.random(3) - 1.
+        #q_dot_k_ = vp.compute_q_dot(np.array(qk), vk_, alpha)[:6]
+        #if q_dot_k_ is None:
+        #    continue
+        #q_dot_k_ = q_dot_mul * np.array(q_dot_k_)
+        #q_ddot_k = (np.array(q_dot_k_) - q_dot_k)
+
+        scale = np.array([1., 1., 0.1])
+        q_ddot_k = vp.compute_q_ddot(np.array(qk), q_dot_k, scale)
         q_ddot_k_mul = np.min(Limits.q_ddot / np.abs(q_ddot_k[:6]))
         q_ddot_k = np.random.random() * q_ddot_k_mul * q_ddot_k * qddot_violation
 
@@ -247,7 +256,7 @@ if __name__ == "__main__":
         i += 1
 
     # dir_name = f"paper/airhockey_table_moves_v08_a10v_tilted_93/{ds}"
-    dir_name = f"paper/airhockey_table_moves_v08_a10v_optimized_regularized_man_omega_nolp/{ds}"
+    dir_name = f"paper/airhockey_table_moves_v08_a10v_optimized_regularized_man_lp_new_restricted2/{ds}"
     ranges = [x0l, x0h, y0l, y0h, xkl, xkh, ykl, ykh]
     os.makedirs(dir_name, exist_ok=True)
     np.savetxt(f"{dir_name}/data_{N}_{idx}.tsv", data, delimiter='\t', fmt="%.8f")

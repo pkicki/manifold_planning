@@ -176,15 +176,30 @@ if __name__ == "__main__":
         ##vz = 0.02 * np.random.random()
         #dx = 0.02 * np.cos(thk + dth)
         #dy = 0.02 * np.sin(thk + dth)
-        #_, q_dot_k_ = get_hitting_configuration(xk + dx, yk + dy, thk + dth)
-        vk_angle = np.arctan2(vk[1], vk[0]) + (0.2 * np.random.random() - 0.1)
-        vk_mag = np.linalg.norm(vk) * (0.1 * np.random.random() + 0.95)
-        vk_ = vk_mag * np.array([np.cos(vk_angle), np.sin(vk_angle), 0.01 * (2 * np.random.random() - 1.)])
-        alpha = 2 * np.random.random(3) - 1.
-        q_dot_k_ = vp.compute_q_dot(np.array(qk), vk_, alpha)[:6]
-        if q_dot_k_ is None:
-            continue
-        q_ddot_k = (np.array(q_dot_k_) - q_dot_k)
+        #_, q_dot_k_, _ = get_hitting_configuration(xk + dx, yk + dy, thk + dth)
+
+        #vk_angle = np.arctan2(vk[1], vk[0]) + (0.2 * np.random.random() - 0.1)
+        #vk_mag = np.linalg.norm(vk) * (0.1 * np.random.random() + 0.95)
+        #vk_ = vk_mag * np.array([np.cos(vk_angle), np.sin(vk_angle), 0.01 * (2 * np.random.random() - 1.)])
+        #alpha = 2 * np.random.random(3) - 1.
+        #q_dot_k_ = vp.compute_q_dot(np.array(qk), scale)
+
+        #ak_angle = np.pi * (2. * np.random.random() - 1.)
+        #a_xyz = vk_mag * np.array([np.cos(ak_angle), np.sin(ak_angle), 0.01 * (2 * np.random.random() - 1.)])
+        #alpha = 2 * np.random.random(6) - 1.
+        scale = np.array([1., 1., 0.1])
+        q_ddot_k = vp.compute_q_ddot(np.array(qk), q_dot_k, scale)
+
+        #vk_angle = np.arctan2(vk[1], vk[0]) + (0.1 * np.random.random() - 0.05)
+        #vk_mag = (0.1 * np.random.random() - 0.05)
+        #vk_ = vk_mag * np.array([np.cos(vk_angle), np.sin(vk_angle), 0.005 * (2 * np.random.random() - 1.)])
+        #alpha = 2 * np.random.random(3) - 1.
+        #alpha = np.zeros((3,))
+        #delta_q_dot_k = vp.compute_q_dot(np.array(qk), vk_, alpha)[:6]
+        #q_dot_k_ = q_dot_k + delta_q_dot_k
+        #if q_dot_k_ is None:
+        #    continue
+        #q_ddot_k = (np.array(q_dot_k_) - q_dot_k)
         q_ddot_k_mul = np.min(Limits.q_ddot / np.abs(q_ddot_k[:6]))
         q_ddot_k = np.random.random() * q_ddot_k_mul * q_ddot_k * qddot_violation
 
@@ -200,7 +215,7 @@ if __name__ == "__main__":
 
     # dir_name = f"paper/airhockey_table_moves_v08_a10v_tilted_93/{ds}"
     #dir_name = f"paper/airhockey_table_moves_v08_a10v_optimized_hitting_2/{ds}"
-    dir_name = f"paper/airhockey_table_moves_v08_a10v_optimized_hitting_regularized_man_lp/{ds}"
+    dir_name = f"paper/airhockey_table_moves_v08_a10v_optimized_hitting_regularized_man_lp_test1/{ds}"
     ranges = [x0l, x0h, y0l, y0h, xkl, xkh, ykl, ykh]
     os.makedirs(dir_name, exist_ok=True)
     np.savetxt(f"{dir_name}/data_{N}_{idx}.tsv", data, delimiter='\t', fmt="%.8f")
