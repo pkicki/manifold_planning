@@ -44,11 +44,11 @@ class VelocityProjector:
         #null_J = scipy.linalg.null_space(J)
         #q_ddot = pinvJ @ (a_xyz[:3] - dJ @ q_dot[:6]) + null_J @ alpha
 
-        a_xyz_min = J @ -Limits.q_ddot + dJ @ q_dot[:6]
-        a_xyz_max = J @ Limits.q_ddot + dJ @ q_dot[:6]
-        a_xyz = (a_xyz_min + a_xyz_max) / 2. + (a_xyz_max - a_xyz_min) / 2. * (2.*np.random.random(3) - 1.) * a_xyz_scale
         alpha = (2. * np.random.random(6) - 1.) * Limits.q_ddot
         null_proj = (np.eye(6) - pinvJ @ J)
+        a_xyz_min = J @ (-Limits.q_ddot - null_proj @ alpha) + dJ @ q_dot[:6]
+        a_xyz_max = J @ (Limits.q_ddot - null_proj @ alpha) + dJ @ q_dot[:6]
+        a_xyz = (a_xyz_min + a_xyz_max) / 2. + (a_xyz_max - a_xyz_min) / 2. * (2.*np.random.random(3) - 1.) * a_xyz_scale
         q_ddot = pinvJ @ (a_xyz - dJ @ q_dot[:6]) + null_proj @ alpha
         return q_ddot
 
