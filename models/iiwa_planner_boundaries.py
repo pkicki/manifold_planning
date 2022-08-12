@@ -91,8 +91,8 @@ class IiwaPlannerBoundaries(tf.keras.Model):
         #    xe = tf.concat([xe, q_ddot_d / Limits.q_ddot[np.newaxis]], axis=-1)
         xp = normalize_xy(puck_pose)
 
-        x = tf.concat([xb, xe, xp], axis=-1)
-        #x = tf.concat([xb, xe], axis=-1)
+        #x = tf.concat([xb, xe, xp], axis=-1)
+        x = tf.concat([xb, xe], axis=-1)
 
         for l in self.fc:
             x = l(x)
