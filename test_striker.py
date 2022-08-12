@@ -40,104 +40,13 @@ pino_data = pino_model.createData()
 
 loss = HittingLoss(N, urdf_path, air_hockey_table, Limits.q_dot, Limits.q_ddot, Limits.q_dddot, Limits.tau)
 
-model = IiwaPlannerBoundaries(N, 3, 3, loss.bsp, loss.bsp_t)
+model = IiwaPlannerBoundaries(N, 3, 2, loss.bsp, loss.bsp_t)
 ckpt_striker = tf.train.Checkpoint(model=model)
-# ckpt_striker.restore("./trained_models/striker/best-60")
-# ckpt_striker.restore("./trained_models/striker/v08a08z1e3/best-157")
-
-# ckpt_striker.restore("./trained_models/striker/v08a08huberalpha/best-183")
-
-# ckpt_striker.restore("./trained_models/striker/slow1stjoint/best-95")
-# ckpt_striker.restore("./trained_models/striker/v08a08huberalphaint/best-87")
-# ckpt_striker.restore("./trained_models/striker/v08a08huberalphaint/best-119")
-# ckpt_striker.restore("./trained_models/striker/v08a10v_huberalpha/best-272")
-# ckpt_striker.restore("./trained_models/striker/v08a08fixedjac/best-79")
-# ckpt_striker.restore("./trained_models/striker/v08a08fixedjac/best-67")
-# ckpt_striker.restore("./trained_models/striker/v08a08fixedjac/best-134")
-# ckpt_striker.restore("./trained_models/striker/v08a08short/best-258")
-# ckpt_striker.restore("./trained_models/striker/v08a08short/best-165")
-# ckpt_striker.restore("./trained_models/striker/v08a08replanning1000/best-52")
-# ckpt_striker.restore("./trained_models/striker/v08a08replanning1000/best-75")
-# ckpt_striker.restore("./trained_models/striker/v08a08fixedjac/best-187")
-# ckpt_striker.restore("./trained_models/striker/v08a08fixedjac/best-202")
-# ckpt_striker.restore("./trained_models/striker/v08a10v_jerk/best-47")
-# ckpt_striker.restore("./trained_models/striker/v08a10v_jerk/best-55")
-# ckpt_striker.restore("./trained_models/striker/v08a10v_jerk/best-161")
-# ckpt_striker.restore("./trained_models/striker/v08a10v_beyond/best-168")
-# ckpt_striker.restore("./trained_models/striker/v08a10v_beyond/best-271")
-# ckpt_striker.restore("./trained_models/striker/v08a10v_qddotend/best-88")
-# ckpt_striker.restore("./trained_models/striker/v08a10v_qddotend/best-122")
-# ckpt_striker.restore("./trained_models/striker/v08a10v_qddotend/best-62")
-# ckpt_striker.restore("./trained_models/striker/v08a7v_beyond/best-93")
-# ckpt_striker.restore("./trained_models/striker/v08a7v_beyond/best-123")  # 7v -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_jerklimit/best-107") # 10a -> athos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_jerklimit/best-123") # 15a -> athos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_jerklimit/last_n-126") # 15a -> athos (later)
-# ckpt_striker.restore("./trained_models/striker/v08a10v_qddotend/best-144") # qddotend 1em0 -> aramis
-# ckpt_striker.restore("./trained_models/striker/v08a10v_qddotend/best-156") # qddotend 1em1 -> robot40
-# ckpt_striker.restore("./trained_models/striker/v08a10v_qddotend/best-115") # qddotend 1em2 -> aramis
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-77") # torqueint 1em2 -> adas1
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-91") # torqueint 1em2 -> adas1
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-107") # torqueint 1em2 -> adas1
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-34") # torqueint 1em1 -> athos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-37") # torqueint 1em3 -> athos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-48") # torqueint 1em0 -> robot40
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-32") # torqueint 1em1 -> aramis
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-37") # torqueint 1em1 -> aramis
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-39") # torqueint 1em1 -> aramis
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/best-67") # torqueint 1em1 80k -> aramis
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-99") # torqueint 1em2 -> adas1
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-80") # torqueint 0em0 -> robot40
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/last_n-53") # centrifugal 1em1 -> robot40
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/last_n-83") # centrifugal 1em0 -> robot40
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/best-81") # centrifugal true 1em3 -> aramis
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/last_n-97") # centrifugal true 1em3 -> aramis
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/last_n-103") # centrifugal true 1em3 -> aramis
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/last_n-102") # centrifugal true 1em2 -> athos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/last_n-110") # centrifugal true 1em2 -> athos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/best-88") # centrifugal true 1em1 -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/best-92") # centrifugal true 1em1 -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/best-99") # centrifugal true 1em1 -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/best-105") # centrifugal true 1em1 -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/best-115") # centrifugal true 1em1 -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/best-128") # centrifugal true 1em1 -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/last_n-65") # centrifugal 1em2 time 0 -> adas1
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/best-116") # centrifugal true 1em2 retore t1 c1 -> athos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/best-129") # centrifugal true 1em2 retore t1 c1 -> athos
-
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugalsigmoid/best-122") # centrifugal a15b06c03 -> aramis
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugalsigmoid/best-51") # centrifugal a25b06c025 -> athos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugalsigmoid/best-59") # centrifugal a20b07c025 -> athos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugalsigmoid/last_n-177") # centrifugal a20b06c02 cont from true 1em1 -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugalsigmoid/best-219") # centrifugal a20b07c035 cont from true 1em1 -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugalsigmoid/last_n-59") # centrifugal a25b065c03 -> adas1
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugalsigmoid/last_n-68") # centrifugal a20b06c02 -> robot40
-
-#ckpt_striker.restore("./trained_models/striker/v08a10v_opt_centrifugalsigmoid/last_n-21")  # athos
-#ckpt_striker.restore("./trained_models/striker/v08a10v_opt_centrifugalsigmoid/last_n-37")  # aramis
-#ckpt_striker.restore("./trained_models/striker/v08a10v_opt_centrifugalsigmoid/last_n-36")  # porthos
-#ckpt_striker.restore("./trained_models/striker/v08a10v_opt_centrifugalsigmoid/last_n-45")  # porthos
-#ckpt_striker.restore("./trained_models/striker/v08a10v_opt_centrifugalsigmoid/last_n-51")  # porthos
-#ckpt_striker.restore("./trained_models/striker/v08a10v_opt_centrifugalsigmoid/last_n-32")  # robot40
-ckpt_striker.restore("./trained_models/striker/v08a10v_myopt_centrifugalsigmoid/last_n-38")  # robot40
-
-#ckpt_striker.restore("./trained_models/striker/v08a10v_newopt/best-34")  # adas1
-
-# ckpt_striker.restore("./trained_models/striker/v08a10v_tilted/last_n-67") # tilted -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_tilted/best-143") # tilted -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_tilted/last_n-134") # tilted 44 -> athos
+# ckpt_striker.restore("./trained_models/striker/opt_man_lp/best-149")
 
 hpo_model = IiwaIKHitting()
 ckpt_hpo = tf.train.Checkpoint(model=hpo_model)
-# ckpt_hpo.restore("./trained_models/ik_hitting/pos/best-104")
-# ckpt_hpo.restore("./trained_models/ik_hitting/nopos/best-113")
 ckpt_hpo.restore(f"./trained_models/ik_hitting/pos_lossabs/best-77")  # beyond
-# ckpt_hpo.restore(f"./trained_models/ik_hitting/pos_lossabs/best-53") # beyond adas1
-# tilted
-# ckpt_hpo.restore(f"./trained_models/ik_hitting/pos_lossabs/best-23")
-# ckpt_hpo.restore(f"./trained_models/ik_hitting/pos_lossabs/best-44")
-# ckpt_hpo.restore(f"./trained_models/ik_hitting/pos_lossabs/best-93")
-# ckpt_hpo.restore(f"./trained_models/ik_hitting/pos_lossabs/best-138")
 
 np.random.seed(444)
 
