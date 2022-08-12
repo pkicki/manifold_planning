@@ -1,16 +1,20 @@
 import os
-import subprocess
+import sys
 from time import perf_counter
 
 import numpy as np
 import pinocchio as pino
+
+SCRIPT_DIR = os.path.dirname(__file__)
+PACKAGE_DIR = os.path.dirname(SCRIPT_DIR)
+sys.path.append(PACKAGE_DIR)
 
 from utils.constants import Limits, UrdfModels, TableConstraint, Base
 import matplotlib.pyplot as plt
 
 import utils.hpo_opt_new as hpoo
 #import utils.hpo_opt as hpoo
-import utils.hpo as hpo
+#import utils.hpo as hpo
 
 #import tensorflow as tf
 
@@ -26,8 +30,8 @@ def get_hitting_configuration_opt(x, y, z, th, q0=None):
     q = s[:7]
     #q_dot = np.array(s[7:14])
     q_dot = np.array(s[9:16])
-    mul = np.max(np.abs(q_dot[:6]) / Limits.q_dot)
-    q_dot = q_dot / mul
+    #mul = np.max(np.abs(q_dot[:6]) / Limits.q_dot)
+    #q_dot = q_dot / mul
     return q, q_dot.tolist()
 
 if __name__ == "__main__":
@@ -92,6 +96,7 @@ if __name__ == "__main__":
     qs = []
     q0s = []
     vs = []
+    ccs = []
     Ymid = int(len(ys)/2)
     #for i in range(len(xs)):
     for x in xs:
@@ -127,6 +132,12 @@ if __name__ == "__main__":
                     q_ = np.array(q + [0., 0.])
                     J = pino.computeFrameJacobian(model, data, q_, idx_, pino.LOCAL_WORLD_ALIGNED)[:3, :6]
                     v = J @ q_dot[:6]
+                    dq = np.concatenate([np.array(q_dot), np.zeros(2)], axis=-1)
+                    ddq = np.zeros_like(dq)
+                    gcc = pino.rnea(model, data, q_, dq, ddq)
+                    g = pino.rnea(model, data, q_, ddq, ddq)
+                    cc = gcc - g
+                    ccs.append(np.sum(np.abs(cc)))
 
                     vs.append(v)
                     qs.append(q[:6])
@@ -152,10 +163,12 @@ if __name__ == "__main__":
 
     vs = np.array(vs)
     vmags = np.linalg.norm(vs, axis=-1)
+    ccs = np.array(ccs)
     vdiffs = np.array(vdiffs)
     q0diffs = np.array(q0diffs)
     qdiffs = np.array(qdiffs)
     vmags = np.reshape(np.reshape(vmags, (X, Y)).T, -1)
+    ccs = np.reshape(np.reshape(ccs, (X, Y)).T, -1)
     vdiffs = np.reshape(np.reshape(vdiffs, (X, Y)).T, -1)
     q0diffs = np.reshape(np.reshape(q0diffs, (X, Y)).T, -1)
     qdiffs = np.reshape(np.transpose(np.reshape(qdiffs, (X, Y, 6)), (1, 0, 2)), (-1, 6))
@@ -170,11 +183,11 @@ if __name__ == "__main__":
     y = np.reshape(np.reshape(y, (X, Y)), -1)
     #th = np.reshape(np.reshape(th, (X, Y)).T, -1)
     #plt.scatter(x, y, c=vdiffs)
-    plt.scatter(x, y, c=vmags)
+    plt.scatter(x, y, c=vmags, vmin=0.7, vmax=2.1)
     #plt.scatter(y, th, c=vdiffs)
     plt.colorbar()
     plt.show()
-    plt.scatter(x, y, c=q0diffs)
+    plt.scatter(x, y, c=ccs)
     #plt.scatter(y, th, c=q0diffs)
     plt.colorbar()
     plt.show()
