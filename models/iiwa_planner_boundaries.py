@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 from utils.constants import Limits
 from utils.data import unpack_data_boundaries
+from utils.normalize import normalize_xy
 
 
 class IiwaPlannerBoundaries(tf.keras.Model):
@@ -41,7 +42,7 @@ class IiwaPlannerBoundaries(tf.keras.Model):
         ]
 
     def __call__(self, x, mul=1.):
-        q0, qd, xyth, q_dot_0, q_ddot_0, q_dot_d = unpack_data_boundaries(x, self.n_dof + 1)
+        q0, qd, xyth, q_dot_0, q_ddot_0, q_dot_d, puck_pose = unpack_data_boundaries(x, self.n_dof + 1)
         #q_ddot_0 = np.zeros_like(q_ddot_0)
         #q_ddot_d = np.zeros_like(q_ddot_0)
 
@@ -88,8 +89,10 @@ class IiwaPlannerBoundaries(tf.keras.Model):
             xe = tf.concat([xe, q_dot_d / Limits.q_dot[np.newaxis]], axis=-1)
         #if self.n_pts_fixed_end > 2:
         #    xe = tf.concat([xe, q_ddot_d / Limits.q_ddot[np.newaxis]], axis=-1)
+        xp = normalize_xy(puck_pose)
 
-        x = tf.concat([xb, xe], axis=-1)
+        x = tf.concat([xb, xe, xp], axis=-1)
+        #x = tf.concat([xb, xe], axis=-1)
 
         for l in self.fc:
             x = l(x)

@@ -19,15 +19,15 @@ class VelocityProjector:
         J = pino.computeFrameJacobian(self.model, self.data, q, idx_, pino.LOCAL_WORLD_ALIGNED)[:3, :6]
         #null_J = scipy.linalg.null_space(J)
         pinvJ = np.linalg.pinv(J)
-        v_xyz_min = J @ -Limits.q_dot
-        v_xyz_max = J @ Limits.q_dot
-        v_xyz = (v_xyz_min + v_xyz_max) / 2. + (v_xyz_max - v_xyz_min) / 2. * (2.*np.random.random(3) - 1.) * v_xyz_scale
-        null_proj = (np.eye(6) - pinvJ @ J)
         alpha = (2. * np.random.random(6) - 1.) * Limits.q_dot
+        null_proj = (np.eye(6) - pinvJ @ J)
+        v_xyz_min = J @ (-Limits.q_dot - null_proj @ alpha)
+        v_xyz_max = J @ (Limits.q_dot - null_proj @ alpha)
+        v_xyz = (v_xyz_min + v_xyz_max) / 2. + (v_xyz_max - v_xyz_min) / 2. * (2.*np.random.random(3) - 1.) * v_xyz_scale
         q_dot = pinvJ @ v_xyz + null_proj @ alpha
         #q_dot = pinvJ @ v_xyz[:3] + null_J @ alpha
         v = J @ q_dot[:6]
-        return q_dot
+        return q_dot, v
 
     def compute_q_ddot(self, q, q_dot, a_xyz_scale):
         q = np.pad(q, (0, self.n - q.shape[0]), mode='constant')

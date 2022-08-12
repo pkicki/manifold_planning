@@ -15,7 +15,8 @@ def unpack_data_boundaries(x, n):
     q_dot_0 = x[:, 2 * n + 3: 3 * n + 2]
     q_ddot_0 = x[:, 3 * n + 3: 4 * n + 2]
     q_dot_k = x[:, 4 * n + 3: 5 * n + 2]
-    return q0, qk, xyth, q_dot_0, q_ddot_0, q_dot_k
+    puck_pose = x[:, -2:]
+    return q0, qk, xyth, q_dot_0, q_ddot_0, q_dot_k, puck_pose
 
 
 def unpack_data_linear_move(x, n):
