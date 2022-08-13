@@ -18,7 +18,7 @@ from utils.bspline import BSpline
 from utils.constants import Limits, TableConstraint, UrdfModels, Base
 from utils.manipulator import Iiwa
 from losses.hittting import HittingLoss
-from losses.constraint_functions import air_hockey_table
+from losses.constraint_functions import air_hockey_table, air_hockey_puck
 from models.iiwa_planner_boundaries import IiwaPlannerBoundaries
 from models.iiwa_ik_hitting import IiwaIKHitting
 
@@ -43,59 +43,18 @@ po = StartPointOptimizer(urdf_path)
 pino_model = pino.buildModelFromUrdf(urdf_path)
 pino_data = pino_model.createData()
 
-loss = HittingLoss(N, urdf_path, air_hockey_table, Limits.q_dot, Limits.q_ddot, Limits.q_dddot, Limits.tau)
+loss = HittingLoss(N, urdf_path, air_hockey_table, air_hockey_puck, Limits.q_dot, Limits.q_ddot, Limits.q_dddot, Limits.tau)
 
 model = IiwaPlannerBoundaries(N, 3, 2, loss.bsp, loss.bsp_t)
 ckpt_striker = tf.train.Checkpoint(model=model)
-# ckpt_striker.restore("./trained_models/striker/best-60")
-# ckpt_striker.restore("./trained_models/striker/v08a08z1e3/best-157")
-
-# ckpt_striker.restore("./trained_models/striker/v08a08huberalpha/best-183")
-# ckpt_striker.restore("./trained_models/striker/slow1stjoint/best-95")
-
-# ckpt_striker.restore("./trained_models/striker/v08a08huberalphaint/best-26")
-# ckpt_striker.restore("./trained_models/striker/v08a08huberalphaint/best-60")
-# ckpt_striker.restore("./trained_models/striker/v08a08huberalphaint/best-79")
-# ckpt_striker.restore("./trained_models/striker/v08a08huberalphaint/best-87")
-# ckpt_striker.restore("./trained_models/striker/v08a08huberalphaint/best-119")
-# ckpt_striker.restore("./trained_models/striker/v08a10v_huberalpha/best-272")
-# ckpt_striker.restore("./trained_models/striker/v08a08fixedjac/best-79")
-# ckpt_striker.restore("./trained_models/striker/v08a08fixedjac/best-134")
-# ckpt_striker.restore("./trained_models/striker/v08a08fixedjac/best-67")
-# ckpt_striker.restore("./trained_models/striker/v08a10v_jerk/best-161")
-# ckpt_striker.restore("./trained_models/striker/v08a10v_beyond/best-168")
 # ckpt_striker.restore("./trained_models/striker/v08a10v_beyond/best-271")
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-99") # torqueint 1em2 -> adas1
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-107") # torqueint 1em2 -> adas1
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-37") # torqueint 1em1 -> athos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-48") # torqueint 1em0 -> robot40
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-37") # torqueint 1em1 -> aramis
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-39") # torqueint 1em1 -> aramis
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/best-67") # torqueint 1em1 80k -> aramis
-# ckpt_striker.restore("./trained_models/striker/v08a10v_torqueint/last_n-80") # torqueint 0em0 -> robot40
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/last_n-65") # centrifugal 1em2 time 0 -> adas1
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/best-88") # centrifugal true 1em1 -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/best-92") # centrifugal true 1em1 -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/best-99") # centrifugal true 1em1 -> porthos
-#ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/best-115")  # centrifugal true 1em1 -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugal/last_n-103") # centrifugal true 1em3 -> aramis
-# ckpt_striker.restore("./trained_models/striker/v08a10v_centrifugalsigmoid/best-51") # centrifugal a25b06c025 -> athos
 
-# ckpt_striker.restore("./trained_models/striker/v08a10v_myopt_centrifugalsigmoid/last_n-64") # robot40
-ckpt_striker.restore("./trained_models/striker/v08a10v_newopt/best-44")  # porthos jerk1em4 hitting
-#ckpt_striker.restore("./trained_models/striker/v08a10v_newopt/last_n-35")  # adas1 hitting
-
-# ckpt_striker.restore("./trained_models/striker/v08a10v_tilted/last_n-67") # tilted -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_tilted/best-143") # tilted -> porthos
-# ckpt_striker.restore("./trained_models/striker/v08a10v_tilted/last_n-134") # tilted 44 -> athos
+ckpt_striker.restore("./trained_models/striker/opt_man_lp/best-149") # robot40 w torque (used in experiments)
+#ckpt_striker.restore("../../trained_models/striker/opt_man_lp/general/last_n-111") # general model (used for experiments)
 
 hpo_model = IiwaIKHitting()
 ckpt_hpo = tf.train.Checkpoint(model=hpo_model)
-# ckpt_hpo.restore("./trained_models/ik_hitting/pos/best-104")
-# ckpt_hpo.restore("./trained_models/ik_hitting/nopos/best-113")
 ckpt_hpo.restore(f"./trained_models/ik_hitting/pos_lossabs/best-77")
-# ckpt_hpo.restore(f"./trained_models/ik_hitting/pos_lossabs/best-23")
-# ckpt_hpo.restore(f"./trained_models/ik_hitting/pos_lossabs/best-138")
 
 np.random.seed(444)
 
@@ -128,7 +87,7 @@ def make_d():
     # alpha = np.zeros(3)
     alpha = 2 * np.random.random(3) - 1
     # q_dot_0 = vp.compute_q_dot(np.array(q0), v_xyz, alpha)
-    q_dot_0 = vp.compute_q_dot(np.array(q0), np.concatenate([v_xyz, orts]), alpha)[:7]
+    q_dot_0, v0 = vp.compute_q_dot(np.array(q0), np.array([1., 1., 0.1]))[:7]
     print(q_dot_0)
     ql = Limits.q_dot
     max_gain = np.min(ql / np.abs(q_dot_0[:6]))

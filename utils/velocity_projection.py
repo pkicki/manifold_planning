@@ -51,6 +51,19 @@ class VelocityProjector:
         a_xyz = (a_xyz_min + a_xyz_max) / 2. + (a_xyz_max - a_xyz_min) / 2. * (2.*np.random.random(3) - 1.) * a_xyz_scale
         q_ddot = pinvJ @ (a_xyz - dJ @ q_dot[:6]) + null_proj @ alpha
         return q_ddot
+    
+    def compute_q_ddot_for_a(self, q, q_dot, a):
+        q = np.pad(q, (0, self.n - q.shape[0]), mode='constant')
+        q_dot = np.pad(q_dot, (0, self.n - q_dot.shape[0]), mode='constant')
+        idx_ = self.model.getFrameId("F_striker_tip")
+        pino.computeJointJacobiansTimeVariation(self.model, self.data, q, q_dot)
+        dJ = pino.getFrameJacobianTimeVariation(self.model, self.data, idx_, pino.LOCAL_WORLD_ALIGNED)[:3, :6]
+        J = pino.computeFrameJacobian(self.model, self.data, q, idx_, pino.LOCAL_WORLD_ALIGNED)[:3, :6]
+        pinvJ = np.linalg.pinv(J)
+        alpha = (2. * np.random.random(6) - 1.) * Limits.q_ddot
+        null_proj = (np.eye(6) - pinvJ @ J)
+        q_ddot = pinvJ @ (a - dJ @ q_dot[:6]) + null_proj @ alpha
+        return q_ddot
 
 if __name__ == "__main__":
     urdf_path = "../../" + UrdfModels.striker
