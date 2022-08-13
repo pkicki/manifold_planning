@@ -88,7 +88,7 @@ def validate_if_pose_is_possible(x, y, th):
 
 def validate_if_pose_is_reachable_with_given_velocity(x, y, v_x, v_y):
     """Validates if given position is reachable with given velocity such that it is possible to maintain given TableConstraints"""
-    t = 0.05
+    t = 0.02
     xf = x + v_x * t
     yf = y + v_y * t
     #xb = x - v_x * t
@@ -102,6 +102,10 @@ def validate_if_initial_mallet_and_puck_positions_makes_hit_possible(xm, ym, xp,
     #x = xp > xm
     return dist# and x
 
+def validate_if_hitting_angle_is_in_right_half_plane(x0, y0, xk, yk, thk):
+    thmp = np.arctan2(yk - y0, xk - x0)
+    diff = np.abs(thmp - thk)
+    return diff < np.pi/2 + np.pi/6
 
 urdf_path = os.path.join(os.path.dirname(__file__), "..", UrdfModels.striker)
 po = StartPointOptimizer(urdf_path)
@@ -154,11 +158,11 @@ if __name__ == "__main__":
     N = int(sys.argv[3])
 
     x0l = 0.6
-    x0h = 1.25
+    x0h = 1.3
     y0l = -0.45
     y0h = 0.45
     xkl = 0.6
-    xkh = 1.25
+    xkh = 1.3
     ykl = -0.45
     ykh = 0.45
     i = 0
@@ -172,6 +176,10 @@ if __name__ == "__main__":
 
         xk = (xkh - xkl) * np.random.rand() + xkl
         yk = (ykh - ykl) * np.random.rand() + ykl
+        thk = np.pi * (2 * np.random.random() - 1.)
+
+        if not validate_if_hitting_angle_is_in_right_half_plane(x0, y0, xk, yk, thk):
+            continue
 
         if not validate_if_initial_mallet_and_puck_positions_makes_hit_possible(x0, y0, xk, yk):
             continue
@@ -194,7 +202,7 @@ if __name__ == "__main__":
         alpha = 2 * np.random.random(3) - 1.
         #q_dot_0 = vp.compute_q_dot(q0, v_xyz, alpha)[:7]
         v_xyz_scale = np.array([1., 1., 0.05])
-        q_dot_0 = vp.compute_q_dot(q0, v_xyz_scale)
+        q_dot_0, v0 = vp.compute_q_dot(q0, v_xyz_scale)
 
         #dth = 0.02 * (2 * np.random.random() - 1)
         #v_xy_ = (0.1*np.random.random() + 0.95) * np.array([np.cos(th0+dth), np.sin(th0+dth)])
@@ -207,27 +215,33 @@ if __name__ == "__main__":
         ql = Limits.q_dot
         max_gain = np.min(ql / np.abs(q_dot_0[:6]))
         q_dot_mul = max_gain * np.random.random()
-        #if np.random.random() < 0.2:
-        #    q_dot_mul = 0.
+        if np.random.random() < 0.2:
+            q_dot_mul = 0.
         q_dot_0 = q_dot_mul * q_dot_0 * qdot_violation
 
-        if not validate_if_pose_is_reachable_with_given_velocity(x0, y0, v_xy[0] * q_dot_mul, v_xy[1] * q_dot_mul):
+        if not validate_if_pose_is_reachable_with_given_velocity(x0, y0, v0[0] * q_dot_mul, v0[1] * q_dot_mul):
             continue
 
-        a_xyz_scale = np.array([1., 1., 0.1])
+        a_xyz_scale = 1.25 * np.array([1., 1., 0.1])
         q_ddot_0 = vp.compute_q_ddot(q0, q_dot_0, a_xyz_scale)
         q_ddot_0_mul = np.min(Limits.q_ddot / np.abs(q_ddot_0))
         q_ddot_0 = np.random.random() * q_ddot_0_mul * q_ddot_0 * qddot_violation
 
-        thk = np.pi * (2 * np.random.random() - 1.)
         qk, q_dot_k, vk = get_hitting_configuration(xk, yk, thk, q0.tolist())
+        r = 0.06
+        puck_pose_xk = xk + r * np.cos(thk)
+        puck_pose_yk = yk + r * np.sin(thk)
+        r = 0.06
+        th0k = np.arctan2(-np.sin(th0), -np.cos(th0))
+        puck_pose_x0 = x0 + r * np.cos(th0k)
+        puck_pose_y0 = y0 + r * np.sin(th0k)
         if qk is None or q_dot_k is None:
             continue
         q_dot_k = np.array(q_dot_k)
         max_gain = np.min(ql / np.abs(q_dot_k[:6]))
         q_dot_mul = max_gain * np.random.random()
-        #if np.random.random() < 0.5:
-        #    q_dot_mul = max_gain
+        if np.random.random() < 0.2:
+            q_dot_mul = max_gain / qdot_violation
         q_dot_k = q_dot_mul * q_dot_k * qdot_violation
 
         #vk_angle = np.arctan2(vk[1], vk[0]) + (0.2 * np.random.random() - 0.1)
@@ -240,23 +254,27 @@ if __name__ == "__main__":
         #q_dot_k_ = q_dot_mul * np.array(q_dot_k_)
         #q_ddot_k = (np.array(q_dot_k_) - q_dot_k)
 
-        scale = np.array([1., 1., 0.1])
+        scale = 1.25 * np.array([1., 1., 0.1])
         q_ddot_k = vp.compute_q_ddot(np.array(qk), q_dot_k, scale)
         q_ddot_k_mul = np.min(Limits.q_ddot / np.abs(q_ddot_k[:6]))
         q_ddot_k = np.random.random() * q_ddot_k_mul * q_ddot_k * qddot_violation
 
-        if not validate_if_pose_is_reachable_with_given_velocity(xk, yk, np.cos(thk) * q_dot_mul, np.sin(thk) * q_dot_mul):
+        if not validate_if_pose_is_reachable_with_given_velocity(xk, yk, vk[0] * q_dot_mul * qdot_violation, vk[1] * q_dot_mul * qdot_violation):
             continue
-        if not validate_if_pose_is_reachable_with_given_velocity(xk, yk, -np.cos(thk) * q_dot_mul, -np.sin(thk) * q_dot_mul):
+        if not validate_if_pose_is_reachable_with_given_velocity(xk, yk, -vk[0] * q_dot_mul * qdot_violation, -vk[1] * q_dot_mul * qdot_violation):
             continue
+        #if not validate_if_pose_is_reachable_with_given_velocity(xk, yk, np.cos(thk) * q_dot_mul, np.sin(thk) * q_dot_mul):
+        #    continue
+        #if not validate_if_pose_is_reachable_with_given_velocity(xk, yk, -np.cos(thk) * q_dot_mul, -np.sin(thk) * q_dot_mul):
+        #    continue
 
 
-        data.append(q0.tolist() + qk + [xk, yk, thk] + q_dot_0.tolist() + [0.] + q_ddot_0.tolist() + [0.] + q_dot_k.tolist())
-        data.append(qk + q0.tolist() + [x0, y0, -th0] + q_dot_k.tolist() + [0.] + q_ddot_k.tolist() + [0.] + (-q_dot_0).tolist())
+        data.append(q0.tolist() + qk + [xk, yk, thk] + q_dot_0.tolist() + [0.] + q_ddot_0.tolist() + [0.] + q_dot_k.tolist() + [puck_pose_xk, puck_pose_yk])
+        data.append(qk + q0.tolist() + [x0, y0, th0k] + q_dot_k.tolist() + [0.] + q_ddot_k.tolist() + [0.] + (-q_dot_0).tolist() + [puck_pose_x0, puck_pose_y0])
         i += 1
 
     # dir_name = f"paper/airhockey_table_moves_v08_a10v_tilted_93/{ds}"
-    dir_name = f"paper/airhockey_table_moves_v08_a10v_optimized_regularized_man_lp_new_restricted2/{ds}"
+    dir_name = f"paper/airhockey_table_moves_v08_a10v_optimized_regularized_man_lp_last_chance/{ds}"
     ranges = [x0l, x0h, y0l, y0h, xkl, xkh, ykl, ykh]
     os.makedirs(dir_name, exist_ok=True)
     np.savetxt(f"{dir_name}/data_{N}_{idx}.tsv", data, delimiter='\t', fmt="%.8f")
