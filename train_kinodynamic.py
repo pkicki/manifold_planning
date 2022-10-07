@@ -25,7 +25,7 @@ from utils.constants import Limits, TableConstraint, UrdfModels
 class args:
     batch_size = 128
     working_dir = './trainings'
-    out_name = 'test'
+    out_name = 'kinodynamic_lr5em5_bs128_first_take_alphas_1e0_1em2_1em4_1em2_bars_2em6_6em3_6em2_6em1_gamma3em3'
     log_interval = 100
     learning_rate = 5e-5
     dataset_path = "./data/paper/kinodynamic_first_take/train/data.tsv"
@@ -111,10 +111,10 @@ for epoch in range(30000):
         tf.summary.scalar('epoch/unscaled_loss', unscaled_epoch_loss, step=epoch)
         tf.summary.scalar('epoch/alpha_q_dot', loss.alpha_q_dot, step=epoch)
         tf.summary.scalar('epoch/alpha_q_ddot', loss.alpha_q_ddot, step=epoch)
-        tf.summary.scalar('epoch/alpha_q_dddot', loss.alpha_q_dddot, step=epoch)
+        #tf.summary.scalar('epoch/alpha_q_dddot', loss.alpha_q_dddot, step=epoch)
         tf.summary.scalar('epoch/alpha_constraint', loss.alpha_constraint, step=epoch)
         tf.summary.scalar('epoch/alpha_torque', loss.alpha_torque, step=epoch)
-        tf.summary.scalar('epoch/alpha_obstacle', loss.alpha_obstacle, step=epoch)
+        #tf.summary.scalar('epoch/alpha_obstacle', loss.alpha_obstacle, step=epoch)
 
     # w = 1
     # if epoch % w == w - 1:
