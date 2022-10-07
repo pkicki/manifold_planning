@@ -14,10 +14,36 @@ class TableConstraint:
         return TableConstraint.XLB <= x <= TableConstraint.XRT and TableConstraint.YLB <= y <= TableConstraint.YRT
 
 
+class Table1:
+    xl = 0.2
+    xh = 0.6
+    yl = -0.6
+    yh = -0.3
+    z_range_l = 0.2
+    z_range_h = 0.5
+
+
+class Table2:
+    xl = 0.2
+    xh = 0.6
+    yl = 0.6
+    yh = 0.3
+    z_range_l = 0.2
+    z_range_h = 0.5
+
+
+class Cup:
+    height = 0.15
+
+
+class Robot:
+    radius = 0.14
+
+
 class Limits:
     q = np.array([2.967, 2.094, 2.967, 2.094, 2.967, 2.094])
     q_dot = 0.8 * np.array([1.4835, 1.4835, 1.7453, 1.3090, 2.2689, 2.3562], dtype=np.float32)
-    #q_ddot = 0.8 * np.array([10., 10., 10., 10., 10., 10.], dtype=np.float32)
+    # q_ddot = 0.8 * np.array([10., 10., 10., 10., 10., 10.], dtype=np.float32)
     q_ddot = 10. * q_dot
     q_ddot = np.min(np.stack([q_ddot, 20. * np.ones((6,), dtype=np.float32)], axis=-1), axis=-1)
     tau = 0.8 * np.array([320, 320, 176, 176, 110, 40], dtype=np.float32)
@@ -25,7 +51,7 @@ class Limits:
 
 
 class Base:
-    #configuration = [0.0, 0.06811, 0.0, -1.48, 0., 1.2544]
+    # configuration = [0.0, 0.06811, 0.0, -1.48, 0., 1.2544]
     configuration = [-7.16000830e-06, 6.97494070e-01, 7.26955352e-06, -5.04898567e-01, 6.60813111e-07, 1.92857916e+00]
     position = [0.65, 0., 0.16]
     # [-9.995474726204004e-13, 0.7135205165808098, 5.8125621129156324e-12, -0.5024774869152212,
@@ -35,4 +61,5 @@ class Base:
 class UrdfModels:
     striker = "iiwa_striker_new.urdf"
     iiwa = "iiwa.urdf"
+    iiwa_cup = "iiwa_cup.urdf"
     virtual_box = "virtual_box.urdf"

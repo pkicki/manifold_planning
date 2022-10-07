@@ -111,7 +111,7 @@ class Iiwa:
             links.append(LinkTF(name, rpy, xyz, mass, inertia))
         return joints, links
 
-    def forward_kinematics(self, q):
+    def forward_kinematics_R_list(self, q):
         q = tf.concat([q, tf.zeros_like(q)[..., :7 - q.shape[-1]]], axis=-1)
         qs = []
         qidx = 0
@@ -125,9 +125,10 @@ class Iiwa:
         q = tf.stack(qs, axis=-1)
         q = tf.cast(q, tf.float32)
         Racc = tf.eye(3, batch_shape=tf.shape(q)[:-1])
-        xyz = tf.stack([0.0, 0.0, 0.0])[:, tf.newaxis]
-        for i in range(len(tf.shape(q)) - 1):
-            xyz = xyz[tf.newaxis]
+        z = tf.zeros_like(q[..., 0])
+        xyz = tf.stack([z, z, z], axis=-1)[..., tf.newaxis]
+        xyz_list = [xyz]
+        R_list = [Racc]
         for i in range(self.n_dof):
             qi = q[..., i]
             j = self.joints[i]
@@ -136,7 +137,33 @@ class Iiwa:
                 p = p[tf.newaxis]
             xyz = xyz + Racc @ p
             Racc = Racc @ R
-        return xyz
+            xyz_list.append(xyz)
+            R_list.append(Racc)
+        return xyz_list, R_list
+
+    def forward_kinematics(self, q):
+        return self.forward_kinematics_R_list(q)[0][-1]
+
+    def forward_kinematics_R(self, q):
+        xyzs, Rs = self.forward_kinematics_R_list(q)
+        return xyzs[-1], Rs[-1]
+
+    def interpolate_links(self, xyzs):
+        #dists = np.linalg.norm(np.diff(np.concatenate(xyzs, axis=-1), axis=-1), axis=-2)
+        xyzs_ = [xyzs[0]]
+        for i, n in enumerate([0, 1, 2, 2, 2, 1, 2, 0, 0, 1]):
+            s = tf.linspace(0., 1., n + 2)[1:]
+            for x in s:
+                xyzs_.append(x * xyzs[i + 1] + (1. - x) * xyzs[i])
+        xyzs_interp = tf.stack(xyzs_, axis=-3)
+        #dists_ = np.linalg.norm(np.diff(np.concatenate(xyzs_interp, axis=-1), axis=-1), axis=-2)
+        return xyzs_interp
+
+    def interpolated_forward_kinematics(self, q):
+        xyzs, Rs = self.forward_kinematics_R_list(q)
+        return self.interpolate_links(xyzs), Rs[-1]
+
+
 
     def rnea(self, q, dq, ddq):
         q = tf.concat([q, tf.zeros_like(q)[..., :7 - q.shape[-1]]], axis=-1)

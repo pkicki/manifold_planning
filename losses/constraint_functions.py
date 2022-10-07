@@ -1,6 +1,8 @@
 import tensorflow as tf
 
 from losses.utils import huber
+from utils.collisions import collision_with_box
+from utils.constants import Table1, Cup, Robot, Table2
 from utils.table import Table
 
 table = Table()
@@ -42,3 +44,16 @@ def air_hockey_puck(xyz, dt, puck_pose):
 
     puck_loss = tf.reduce_sum(puck_loss * threshold * dt, axis=-1)
     return puck_loss
+
+
+def two_tables_vertical(xyz, R, dt, data):
+    huber_along_path = lambda x: tf.reduce_sum(dt * huber(x), axis=-1)
+
+    collision_table_1 = collision_with_box(xyz, Robot.radius, Table1.xl, Table1.xh, Table1.yl, Table1.yh, -1e10, xyz[:, :1, -1:, -1] - Cup.height)
+    collision_table_2 = collision_with_box(xyz, Robot.radius, Table2.xl, Table2.xh, Table2.yl, Table2.yh, -1e10, xyz[:, -1:, -1:, -1] - Cup.height)
+
+    vertical_loss = huber_along_path(R[:, :, 2, 2])
+    collision_table_1_loss = huber_along_path(tf.reduce_sum(collision_table_1, axis=-1))
+    collision_table_2_loss = huber_along_path(tf.reduce_sum(collision_table_2, axis=-1))
+    constraint_losses = tf.stack([vertical_loss, collision_table_1_loss, collision_table_2_loss], axis=-1)
+    return constraint_losses
