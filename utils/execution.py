@@ -37,7 +37,7 @@ class ExperimentHandler:
 
     def save_best(self):
         self.ckpt.save(self.checkpoints_best_path)
-        list_of_files = [f for f in os.listdir(self.checkpoints_best_dir) if f.startswith("best-")]
+        list_of_files = [f for f in os.listdir(self.checkpoints_best_dir) if f.startswith("best-") and "." in f]
         full_path = [os.path.join(self.checkpoints_best_dir, x) for x in list_of_files]
         if len(full_path) > 20:
             oldest_file = min(full_path, key=os.path.getctime)
