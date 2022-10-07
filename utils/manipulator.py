@@ -54,7 +54,11 @@ class JointTF:
         self.Rb = tfg.geometry.transformation.rotation_matrix_3d.from_euler(self.rpy)
 
     def Rq(self, q):
-        return tfg.geometry.transformation.rotation_matrix_3d.from_euler(q[..., tf.newaxis] * self.axis)
+        if self.fixed:
+            R = tf.reshape(tf.eye(3), [1 for i in range(len(q.shape))] + [3, 3])
+            return R
+        else:
+            return tfg.geometry.transformation.rotation_matrix_3d.from_euler(q[..., tf.newaxis] * self.axis)
 
     def R(self, q):
         if self.axis is None:
@@ -149,26 +153,43 @@ class Iiwa:
         return xyzs[-1], Rs[-1]
 
     def interpolate_links(self, xyzs):
-        #dists = np.linalg.norm(np.diff(np.concatenate(xyzs, axis=-1), axis=-1), axis=-2)
+        # dists = np.linalg.norm(np.diff(np.concatenate(xyzs, axis=-1), axis=-1), axis=-2)
         xyzs_ = [xyzs[0]]
         for i, n in enumerate([0, 1, 2, 2, 2, 1, 2, 0, 0, 1]):
             s = tf.linspace(0., 1., n + 2)[1:]
             for x in s:
                 xyzs_.append(x * xyzs[i + 1] + (1. - x) * xyzs[i])
         xyzs_interp = tf.stack(xyzs_, axis=-3)
-        #dists_ = np.linalg.norm(np.diff(np.concatenate(xyzs_interp, axis=-1), axis=-1), axis=-2)
+        # dists_ = np.linalg.norm(np.diff(np.concatenate(xyzs_interp, axis=-1), axis=-1), axis=-2)
         return xyzs_interp
 
     def interpolated_forward_kinematics(self, q):
         xyzs, Rs = self.forward_kinematics_R_list(q)
         return self.interpolate_links(xyzs), Rs[-1]
 
-
-
     def rnea(self, q, dq, ddq):
+        # todo should be rewritten in order to work also if fixed joints are present in the middle of the kinematic chain
         q = tf.concat([q, tf.zeros_like(q)[..., :7 - q.shape[-1]]], axis=-1)
         dq = tf.concat([dq, tf.zeros_like(dq)[..., :7 - dq.shape[-1]]], axis=-1)
         ddq = tf.concat([ddq, tf.zeros_like(ddq)[..., :7 - ddq.shape[-1]]], axis=-1)
+        #qs = []
+        #dqs = []
+        #ddqs = []
+        #qidx = 0
+        #for i in range(self.n_dof):
+        #    if self.joints[i].fixed:
+        #        qs.append(tf.zeros_like(q)[..., 0])
+        #        dqs.append(tf.zeros_like(q)[..., 0])
+        #        ddqs.append(tf.zeros_like(q)[..., 0])
+        #    else:
+        #        qs.append(q[..., qidx])
+        #        dqs.append(dq[..., qidx])
+        #        ddqs.append(ddq[..., qidx])
+        #        qidx += 1
+        #q = tf.cast(tf.stack(qs, axis=-1), tf.float32)
+        #dq = tf.cast(tf.stack(dqs, axis=-1), tf.float32)
+        #ddq = tf.cast(tf.stack(ddqs, axis=-1), tf.float32)
+
         one = np.ones_like(q[..., 0])
         zero = np.zeros_like(q[..., 0])
         omega_0_0 = tf.stack([zero, zero, zero], axis=-1)[..., tf.newaxis]
@@ -235,8 +256,9 @@ class Iiwa:
             t_i_ = R_ip1_i @ t_i[-1] - make_S(f_i_) @ r_i_ci[-i] + make_S(f_ip1_i) @ r_ip1_ci[-i] + I_i @ alpha_i_i[-i] \
                    + make_S(omega_i_i[-i]) @ I_i @ omega_i_i[-i]
             t_i.append(t_i_)
-            t_i_joint = (one[..., tf.newaxis, tf.newaxis] * np.array(j.axis) @ t_i_)[..., 0, 0]
-            t_i_joints.append(t_i_joint)
+            if j.axis is not None:
+                t_i_joint = (one[..., tf.newaxis, tf.newaxis] * np.array(j.axis) @ t_i_)[..., 0, 0]
+                t_i_joints.append(t_i_joint)
 
         f_i = f_i[::-1]
         t_i = t_i[::-1]
@@ -265,9 +287,9 @@ if __name__ == "__main__":
     # print(xyz.numpy()[..., 0])
 
     q = np.array([0., 1., 0., -1., 1., 0.], dtype=np.float32)
-    #q = np.array([0., 0., 0., 0., 0., 0.], dtype=np.float32)
+    # q = np.array([0., 0., 0., 0., 0., 0.], dtype=np.float32)
     dq = np.array([1., 1., 1., 1., 1., 1.], dtype=np.float32)
-    #dq = np.array([0., 0., 0., 0., 0., 0.], dtype=np.float32)
+    # dq = np.array([0., 0., 0., 0., 0., 0.], dtype=np.float32)
     ddq = np.array([1., 0., -1., 0., 1., 1.], dtype=np.float32)
 
     q_ = q[np.newaxis, np.newaxis]
@@ -290,7 +312,7 @@ if __name__ == "__main__":
     dq = np.concatenate([dq, np.zeros(1)], axis=-1)
     ddq = np.concatenate([ddq, np.zeros(1)], axis=-1)
     t0 = perf_counter()
-    for i in range(128*1024):
+    for i in range(128 * 1024):
         ret = pino.rnea(pino_model, pino_data, q, dq, ddq)
     t1 = perf_counter()
     b = 0

@@ -36,7 +36,8 @@ class HittingLoss(FeasibilityLoss):
         self.time_mul = 1e0
 
     def call(self, q_cps, t_cps, data):
-        _, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, q, q_dot, q_ddot, q_dddot, torque, centrifugal, t, t_cumsum, dt = super().call(q_cps, t_cps, data)
+        _, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, q, q_dot, q_ddot, q_dddot, torque, t, t_cumsum, dt = super().call(q_cps, t_cps, data)
+        centrifugal = None
 
         xyz = self.man.forward_kinematics(q)
         dx = (xyz[:, 1:, 0, 0] - xyz[:, :-1, 0, 0]) / dt[:, :-1]

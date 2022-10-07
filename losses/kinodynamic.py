@@ -39,7 +39,7 @@ class KinodynamicLoss(FeasibilityLoss):
         self.time_mul = 1e0
 
     def call(self, q_cps, t_cps, data):
-        _, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, q, q_dot, q_ddot, q_dddot, torque, centrifugal, t, t_cumsum, dt = super().call(q_cps, t_cps, data)
+        _, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, q, q_dot, q_ddot, q_dddot, torque, t, t_cumsum, dt = super().call(q_cps, t_cps, data)
 
         links_poses, R = self.man.interpolated_forward_kinematics(q)
         constraint_loss = self.end_effector_constraints_distance_function(links_poses[..., 0], R, dt, data)
@@ -62,7 +62,7 @@ class KinodynamicLoss(FeasibilityLoss):
         model_loss = tf.reduce_sum(losses, axis=-1)
         unscaled_model_loss = tf.reduce_sum(unscaled_losses, axis=-1)
         return model_loss, sum_constraint_loss, sum_q_dot_loss, sum_q_ddot_loss, sum_q_dddot_loss, sum_torque_loss, obstacle_loss, \
-               q, q_dot, q_ddot, q_dddot, torque, centrifugal, links_poses, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss, int_torque_loss
+               q, q_dot, q_ddot, q_dddot, torque, links_poses, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss, int_torque_loss
 
     def alpha_update(self, q_dot_loss, q_ddot_loss, q_dddot_loss, constraint_loss, torque_loss, obstacle_loss):
         max_alpha_update = 10.0

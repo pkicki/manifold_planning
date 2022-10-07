@@ -69,7 +69,7 @@ for epoch in range(30000):
         with tf.GradientTape(persistent=True) as tape:
             q_cps, t_cps = model(d)
             model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, puck_loss, \
-            q, q_dot, q_ddot, q_dddot, torque, centrifugal, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss, \
+            q, q_dot, q_ddot, q_dddot, torque, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss, \
             int_torque_loss = loss(q_cps, t_cps, d)
         grads = tape.gradient(model_loss, model.trainable_variables)
         opt.apply_gradients(zip(grads, model.trainable_variables))
@@ -135,7 +135,7 @@ for epoch in range(30000):
     for i, d in _ds('Val', dataset_epoch, val_size, epoch, args.batch_size):
         q_cps, t_cps = model(d)
         model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, puck_loss, \
-        q, q_dot, q_ddot, q_dddot, torque, centrifugal, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss, \
+        q, q_dot, q_ddot, q_dddot, torque, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss, \
         int_torque_loss = loss(q_cps, t_cps, d)
 
         epoch_loss.append(model_loss)

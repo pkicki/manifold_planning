@@ -17,7 +17,7 @@ class FeasibilityLoss:
         self.q_ddot_limits = q_ddot_limits
         self.q_dddot_limits = q_dddot_limits
         self.torque_limits = torque_limits
-        urdf_path = UrdfModels.iiwa
+        #urdf_path = UrdfModels.iiwa
         self.iiwa = Iiwa(urdf_path)
         self.model = pino.buildModelFromUrdf(urdf_path)
         self.data = self.model.createData()
@@ -77,13 +77,15 @@ class FeasibilityLoss:
         q_dddot_limits = tf.constant(self.q_dddot_limits)[tf.newaxis, tf.newaxis]
         torque_limits = tf.constant(self.torque_limits)[tf.newaxis, tf.newaxis]
 
-        #torque = self.rnea(q, q_dot, q_ddot)
-        rnea_q = tf.stack([q, q, q], axis=1)
-        rnea_q_dot = tf.stack([q_dot, q_dot, tf.zeros_like(q_dot)], axis=1)
-        rnea_q_ddot = tf.stack([q_dot, tf.zeros_like(q_ddot), tf.zeros_like(q_ddot)], axis=1)
-        torques = self.iiwa.rnea(rnea_q, rnea_q_dot, rnea_q_ddot)[..., :6]
-        torque = torques[:, 0]
-        centrifugal_coriolis = torques[:, 1] - torques[:, 2]
+        torque = self.rnea(q, q_dot, q_ddot)
+
+        #rnea_q = tf.stack([q, q, q], axis=1)
+        #rnea_q_dot = tf.stack([q_dot, q_dot, tf.zeros_like(q_dot)], axis=1)
+        #rnea_q_ddot = tf.stack([q_dot, tf.zeros_like(q_ddot), tf.zeros_like(q_ddot)], axis=1)
+        #torques = self.iiwa.rnea(rnea_q, rnea_q_dot, rnea_q_ddot)[..., :6]
+        #torque = torques[:, 0]
+
+        #centrifugal_coriolis = torques[:, 1] - torques[:, 2]
         #torque = self.iiwa.rnea(q, q_dot, q_ddot)[..., :6]
         #torque = np.zeros_like(q_dddot)
 
@@ -111,7 +113,7 @@ class FeasibilityLoss:
         model_losses = tf.concat([q_dot_loss, q_ddot_loss, q_dddot_loss], axis=-1)
         model_loss = tf.reduce_sum(model_losses, axis=-1)
         return model_loss, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, q, q_dot, q_ddot, q_dddot, torque,\
-               centrifugal_coriolis, t, t_cumsum, dt
+               t, t_cumsum, dt
 
     def __call__(self, q_cps, t_cps, data):
         return self.call(q_cps, t_cps, data)
