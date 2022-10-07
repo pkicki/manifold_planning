@@ -31,11 +31,11 @@ class args:
     dataset_path = "./data/paper/kinodynamic_first_take/train/data.tsv"
 
 
-train_data = np.loadtxt(args.dataset_path, delimiter='\t').astype(np.float32)[:256]
+train_data = np.loadtxt(args.dataset_path, delimiter='\t').astype(np.float32)#[:256]
 train_size = train_data.shape[0]
 train_ds = tf.data.Dataset.from_tensor_slices(train_data)
 
-val_data = np.loadtxt(args.dataset_path.replace("train", "val"), delimiter='\t').astype(np.float32)[:128]
+val_data = np.loadtxt(args.dataset_path.replace("train", "val"), delimiter='\t').astype(np.float32)#[:128]
 val_size = val_data.shape[0]
 val_ds = tf.data.Dataset.from_tensor_slices(val_data)
 
