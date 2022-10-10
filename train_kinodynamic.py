@@ -25,7 +25,7 @@ from utils.constants import Limits, TableConstraint, UrdfModels
 class args:
     batch_size = 128
     working_dir = './trainings'
-    out_name = 'kinodynamic_lr5em5_bs128_first_take_alphas_1e0_1em2_1em4_1em2_bars_2em6_6em3_6em2_6em1_gamma3em3'
+    out_name = 'kinodynamic_lr5em5_bs128_first_take_alphas_1e0_1em2_1em4_1em2_bars_1em5_6em3_6em2_6em1_gamma3em3'
     log_interval = 100
     learning_rate = 5e-5
     dataset_path = "./data/paper/kinodynamic_first_take/train/data.tsv"
@@ -43,7 +43,7 @@ urdf_path = os.path.join(os.path.dirname(__file__), UrdfModels.iiwa_cup)
 
 N = 15
 opt = tf.keras.optimizers.Adam(args.learning_rate)
-loss = KinodynamicLoss(N, urdf_path, two_tables_vertical, None, Limits.q_dot, Limits.q_ddot, Limits.q_dddot, Limits.tau)
+loss = KinodynamicLoss(N, urdf_path, two_tables_vertical, None, Limits.q_dot7, Limits.q_ddot7, Limits.q_dddot7, Limits.tau7)
 model = IiwaPlannerBoundariesKinodynamic(N, 3, 2, loss.bsp, loss.bsp_t)
 
 experiment_handler = ExperimentHandler(args.working_dir, args.out_name, args.log_interval, model, opt)

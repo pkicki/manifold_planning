@@ -41,13 +41,17 @@ class Robot:
 
 
 class Limits:
-    q = np.array([2.967, 2.094, 2.967, 2.094, 2.967, 2.094])
-    q_dot = 0.8 * np.array([1.4835, 1.4835, 1.7453, 1.3090, 2.2689, 2.3562], dtype=np.float32)
-    # q_ddot = 0.8 * np.array([10., 10., 10., 10., 10., 10.], dtype=np.float32)
-    q_ddot = 10. * q_dot
-    q_ddot = np.min(np.stack([q_ddot, 20. * np.ones((6,), dtype=np.float32)], axis=-1), axis=-1)
-    tau = 0.8 * np.array([320, 320, 176, 176, 110, 40], dtype=np.float32)
-    q_dddot = 5 * q_ddot
+    q7 = np.array([2.967, 2.094, 2.967, 2.094, 2.967, 2.094, 3.054])
+    q = q7[:6]
+    q_dot7 = 0.8 * np.array([1.4835, 1.4835, 1.7453, 1.3090, 2.2689, 2.3562, 2.3562], dtype=np.float32)
+    q_dot = q_dot7[:6]
+    q_ddot7 = 10. * q_dot7
+    q_ddot7 = np.min(np.stack([q_ddot7, 20. * np.ones((7,), dtype=np.float32)], axis=-1), axis=-1)
+    q_ddot = q_ddot7[:6]
+    tau7 = 0.8 * np.array([320, 320, 176, 176, 110, 40, 40], dtype=np.float32)
+    tau = tau7[:6]
+    q_dddot7 = 5 * q_ddot7
+    q_dddot = q_dddot7[:6]
 
 
 class Base:

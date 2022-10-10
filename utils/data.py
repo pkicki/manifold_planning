@@ -20,8 +20,8 @@ def unpack_data_boundaries(x, n):
 
 
 def unpack_data_kinodynamic(x, n):
-    q0 = x[:, :n - 1]
-    qk = x[:, n:2 * n - 1]
+    q0 = x[:, :n]
+    qk = x[:, n:2 * n]
     xyz0 = x[:, 2 * n: 2 * n + 3]
     xyzk = x[:, 2 * n + 3: 2 * n + 6]
     q_dot_0 = np.zeros_like(q0)

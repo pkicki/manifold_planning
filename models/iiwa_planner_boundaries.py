@@ -10,10 +10,10 @@ from utils.normalize import normalize_xy
 
 
 class IiwaPlannerBoundaries(tf.keras.Model):
-    def __init__(self, N, n_pts_fixed_begin, n_pts_fixed_end, bsp, bsp_t):
+    def __init__(self, N, n_pts_fixed_begin, n_pts_fixed_end, bsp, bsp_t, n_dof=6):
         super(IiwaPlannerBoundaries, self).__init__()
         self.N = N - n_pts_fixed_begin - n_pts_fixed_end
-        self.n_dof = 6
+        self.n_dof = n_dof
         self.n_pts_fixed_begin = n_pts_fixed_begin
         self.n_pts_fixed_end = n_pts_fixed_end
         self.qdd1 = bsp.ddN[0, 0, 0]
@@ -158,21 +158,21 @@ class IiwaPlannerBoundariesHitting(IiwaPlannerBoundaries):
 
 class IiwaPlannerBoundariesKinodynamic(IiwaPlannerBoundaries):
     def __init__(self, N, n_pts_fixed_begin, n_pts_fixed_end, bsp, bsp_t):
-        super(IiwaPlannerBoundariesKinodynamic, self).__init__(N, n_pts_fixed_begin, n_pts_fixed_end, bsp, bsp_t)
+        super(IiwaPlannerBoundariesKinodynamic, self).__init__(N, n_pts_fixed_begin, n_pts_fixed_end, bsp, bsp_t, n_dof=7)
 
     def prepare_data(self, x):
-        q0, qd, xyz0, xyzk, q_dot_0, q_dot_d, q_ddot_0 = unpack_data_kinodynamic(x, self.n_dof + 1)
+        q0, qd, xyz0, xyzk, q_dot_0, q_dot_d, q_ddot_0 = unpack_data_kinodynamic(x, self.n_dof)
 
-        expected_time = tf.reduce_max(tf.abs(qd - q0) / Limits.q_dot[np.newaxis], axis=-1)
+        expected_time = tf.reduce_max(tf.abs(qd - q0) / Limits.q_dot7[np.newaxis], axis=-1)
 
         xb = q0 / pi
         if self.n_pts_fixed_begin > 1:
-            xb = tf.concat([xb, q_dot_0 / Limits.q_dot[np.newaxis]], axis=-1)
+            xb = tf.concat([xb, q_dot_0 / Limits.q_dot7[np.newaxis]], axis=-1)
         if self.n_pts_fixed_begin > 2:
-            xb = tf.concat([xb, q_ddot_0 / Limits.q_ddot[np.newaxis]], axis=-1)
+            xb = tf.concat([xb, q_ddot_0 / Limits.q_ddot7[np.newaxis]], axis=-1)
         xe = qd / pi
         if self.n_pts_fixed_end > 1:
-            xe = tf.concat([xe, q_dot_d / Limits.q_dot[np.newaxis]], axis=-1)
+            xe = tf.concat([xe, q_dot_d / Limits.q_dot7[np.newaxis]], axis=-1)
         # if self.n_pts_fixed_end > 2:
         #    xe = tf.concat([xe, q_ddot_d / Limits.q_ddot[np.newaxis]], axis=-1)
 

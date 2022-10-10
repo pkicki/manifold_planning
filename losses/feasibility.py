@@ -25,27 +25,31 @@ class FeasibilityLoss:
     @tf.custom_gradient
     def rnea(self, q, dq, ddq):
         torque = np.zeros_like(q)
-        dtorque_q = np.zeros(q.shape + q.shape[-1:])
-        dtorque_dq = np.zeros(q.shape + q.shape[-1:])
-        dtorque_ddq = np.zeros(q.shape + q.shape[-1:])
-        q_ = np.pad(q, [[0, 0], [0, 0], [0, 1]], mode='constant')
-        dq_ = np.pad(dq, [[0, 0], [0, 0], [0, 1]], mode='constant')
-        ddq_ = np.pad(ddq, [[0, 0], [0, 0], [0, 1]], mode='constant')
+        n = q.shape[-1]
+        dtorque_q = np.zeros(q.shape + [n])
+        dtorque_dq = np.zeros(q.shape + [n])
+        dtorque_ddq = np.zeros(q.shape + [n])
+        q_ = q.numpy()
+        dq_ = dq.numpy()
+        ddq_ = ddq.numpy()
+        #q_ = np.pad(q, [[0, 0], [0, 0], [0, 1]], mode='constant')
+        #dq_ = np.pad(dq, [[0, 0], [0, 0], [0, 1]], mode='constant')
+        #ddq_ = np.pad(ddq, [[0, 0], [0, 0], [0, 1]], mode='constant')
 
         def grad(upstream):
             for i in range(q_.shape[0]):
                 for j in range(q_.shape[1]):
                     g = pino.computeRNEADerivatives(self.model, self.data, q_[i, j], dq_[i, j], ddq_[i, j])
-                    dtorque_q[i, j] = g[0][:6, :6]
-                    dtorque_dq[i, j] = g[1][:6, :6]
-                    dtorque_ddq[i, j] = g[2][:6, :6]
+                    dtorque_q[i, j] = g[0][:n, :n]
+                    dtorque_dq[i, j] = g[1][:n, :n]
+                    dtorque_ddq[i, j] = g[2][:n, :n]
             g_q = (dtorque_q @ upstream[..., tf.newaxis])[..., 0]
             g_dq = (dtorque_dq @ upstream[..., tf.newaxis])[..., 0]
             g_ddq = (dtorque_ddq @ upstream[..., tf.newaxis])[..., 0]
             return g_q, g_dq, g_ddq
         for i in range(q_.shape[0]):
             for j in range(q_.shape[1]):
-                torque[i, j] = pino.rnea(self.model, self.data, q_[i, j], dq_[i, j], ddq_[i, j])[:6]
+                torque[i, j] = pino.rnea(self.model, self.data, q_[i, j], dq_[i, j], ddq_[i, j])[:n]
         return torque, grad
 
     def call(self, q_cps, t_cps, data):
