@@ -25,9 +25,9 @@ class FeasibilityLoss:
     @tf.custom_gradient
     def rnea(self, q, dq, ddq):
         torque = np.zeros_like(q)
-        dtorque_q = np.zeros(q.shape + q.shape[-1])
-        dtorque_dq = np.zeros(q.shape + q.shape[-1])
-        dtorque_ddq = np.zeros(q.shape + q.shape[-1])
+        dtorque_q = np.zeros(q.shape + q.shape[-1:])
+        dtorque_dq = np.zeros(q.shape + q.shape[-1:])
+        dtorque_ddq = np.zeros(q.shape + q.shape[-1:])
         q_ = np.pad(q, [[0, 0], [0, 0], [0, 1]], mode='constant')
         dq_ = np.pad(dq, [[0, 0], [0, 0], [0, 1]], mode='constant')
         ddq_ = np.pad(ddq, [[0, 0], [0, 0], [0, 1]], mode='constant')
