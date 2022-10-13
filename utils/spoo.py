@@ -13,7 +13,7 @@ class StartPointOptimizerOrientation:
         self.n = n
         self.model = pino.buildModelFromUrdf(urdf_path)
         self.data = self.model.createData()
-        self.bounds = spo.Bounds(self.model.lowerPositionLimit[:6], self.model.upperPositionLimit[:6])
+        self.bounds = spo.Bounds(self.model.lowerPositionLimit[:n], self.model.upperPositionLimit[:n])
 
     def solve(self, point, q0=None):
         point = point.flatten()
@@ -27,16 +27,17 @@ class StartPointOptimizerOrientation:
         t1 = time()
         print(r)
         print("TIME:", t1 - t0)
-        return np.pad(r.x, [[0, 1]])
+        return r.x
 
     def f(self, q, hit_point):
-        pino.forwardKinematics(self.model, self.data, np.pad(q, (0, self.n - len(q)), mode='constant'))
+        pino.forwardKinematics(self.model, self.data, q)
+        #pino.forwardKinematics(self.model, self.data, np.pad(q, (0, self.n - len(q)), mode='constant'))
         pino.updateFramePlacements(self.model, self.data)
         x = self.data.oMf[-1].translation
         diff_x = x - hit_point
         o = self.data.oMf[-1].rotation
-        plane_err = o[2, 2]
-        return np.linalg.norm(diff_x) + np.abs(plane_err)
+        diff_dir = 1.0 - o[2, 2]
+        return np.linalg.norm(diff_x) + np.linalg.norm(diff_dir)
 
 
 if __name__ == "__main__":
@@ -51,13 +52,14 @@ if __name__ == "__main__":
     #po = StartPointOptimizer(urdf_path, 7)
     po = StartPointOptimizerOrientation(urdf_path)
 
-    qlow = np.array([-np.pi / 2, 0.0, -np.pi / 2, -np.pi / 2, -np.pi / 2, -np.pi / 2])
-    qhigh = np.array([np.pi / 2, np.pi / 2, np.pi / 2, 0.0, np.pi / 2, np.pi / 2])
+    qlow = np.array([-np.pi / 2, 0.0, -np.pi / 2, -np.pi / 2, -np.pi / 2, -np.pi / 2, -np.pi])
+    qhigh = np.array([np.pi / 2, np.pi / 2, np.pi / 2, 0.0, np.pi / 2, np.pi / 2, np.pi])
     for i in range(100):
-        qinit = (qhigh - qlow) * np.random.rand(6) + qlow
+        qinit = (qhigh - qlow) * np.random.rand(7) + qlow
         q = po.solve(point, qinit)
         #q = po.solve(point)
-        pino.forwardKinematics(po.model, po.data, np.pad(q, (0, po.n - len(q)), mode='constant'))
+        #pino.forwardKinematics(po.model, po.data, np.pad(q, (0, po.n - len(q)), mode='constant'))
+        pino.forwardKinematics(po.model, po.data, q)
         pino.updateFramePlacements(po.model, po.data)
         xyz = po.data.oMf[-1].translation
         o = po.data.oMf[-1].rotation

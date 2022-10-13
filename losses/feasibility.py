@@ -26,12 +26,12 @@ class FeasibilityLoss:
     def rnea(self, q, dq, ddq):
         torque = np.zeros_like(q)
         n = q.shape[-1]
-        dtorque_q = np.zeros(q.shape + [n])
-        dtorque_dq = np.zeros(q.shape + [n])
-        dtorque_ddq = np.zeros(q.shape + [n])
-        q_ = q.numpy()
-        dq_ = dq.numpy()
-        ddq_ = ddq.numpy()
+        dtorque_q = np.zeros(q.shape + (n,))
+        dtorque_dq = np.zeros(q.shape + (n,))
+        dtorque_ddq = np.zeros(q.shape + (n,))
+        q_ = q.numpy() if type(q) is not np.ndarray else q
+        dq_ = dq.numpy() if type(dq) is not np.ndarray else dq
+        ddq_ = ddq.numpy() if type(ddq) is not np.ndarray else ddq
         #q_ = np.pad(q, [[0, 0], [0, 0], [0, 1]], mode='constant')
         #dq_ = np.pad(dq, [[0, 0], [0, 0], [0, 1]], mode='constant')
         #ddq_ = np.pad(ddq, [[0, 0], [0, 0], [0, 1]], mode='constant')

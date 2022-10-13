@@ -317,7 +317,7 @@
     </inertial>
   </link>
   <joint name="F_joint_cup" type="fixed">
-    <origin rpy="0 0 0" xyz="0 0 0.1"/>
+    <origin rpy="-1.57 0 0" xyz="0 0 0.1"/>
     <parent link="F_link_ee"/>
     <child link="F_link_cup"/>
   </joint>

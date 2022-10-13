@@ -73,10 +73,10 @@ if __name__ == "__main__":
         yk = draw(ykl, ykh)
         zk = draw(zkl, zkh)
 
-        qlow = np.array([-np.pi / 2, 0.0, -np.pi / 2, -np.pi / 2, -np.pi / 2, -np.pi / 2])
-        qhigh = np.array([np.pi / 2, np.pi / 2, np.pi / 2, 0.0, np.pi / 2, np.pi / 2])
+        qlow = np.array([-np.pi / 2, 0.0, -np.pi / 2, -np.pi / 2, -np.pi / 2, -np.pi / 2, -np.pi])
+        qhigh = np.array([np.pi / 2, np.pi / 2, np.pi / 2, 0.0, np.pi / 2, np.pi / 2, np.pi])
 
-        q0_init = draw(qlow, qhigh, n=6)
+        q0_init = draw(qlow, qhigh, n=7)
         xyz = np.concatenate([x0, y0, z0])
         #q0 = po.solve(xyz, q0_init)
         #q0_init = po.solve(xyz, q0_init)[:6]
@@ -90,7 +90,7 @@ if __name__ == "__main__":
         if np.sum(collision): continue
 
 
-        qk_init = draw(qlow, qhigh, n=6)
+        qk_init = draw(qlow, qhigh, n=7)
         xyz = np.concatenate([xk, yk, zk])
         #qk = po.solve([xk, yk, zk], qk_init)
         #qk = po.solve([xk, yk, zk])
@@ -108,7 +108,7 @@ if __name__ == "__main__":
         i += 1
 
     # dir_name = f"paper/airhockey_table_moves_v08_a10v_tilted_93/{ds}"
-    dir_name = f"paper/kinodynamic_first_take/{ds}"
+    dir_name = f"paper/kinodynamic7/{ds}"
     os.makedirs(dir_name, exist_ok=True)
     np.savetxt(f"{dir_name}/data_{N}_{idx}.tsv", data, delimiter='\t', fmt="%.8f")
     os.popen(f'cp {os.path.basename(__file__)} {dir_name}')
