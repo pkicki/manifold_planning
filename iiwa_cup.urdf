@@ -324,14 +324,15 @@
   <link name="F_link_cup">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0.0"/>
-      <mass value="8.0"/>
-      <inertia ixx="0.08" ixy="0.0" ixz="0.0" iyy="0.08" iyz="0.0" izz="0.04"/>
+      <mass value="16.0"/>
+      <inertia ixx="0.16" ixy="0.0" ixz="0.0" iyy="0.16" iyz="0.0" izz="0.08"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0.0"/>
         <geometry>
           <cylinder length="0.3" radius="0.1"/>
         </geometry>
+      <material name="Blue"/>
     </visual>
   </link>
   <!-- Link0 -->
