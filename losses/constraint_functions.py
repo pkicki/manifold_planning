@@ -3,6 +3,7 @@ import tensorflow as tf
 from losses.utils import huber
 from utils.collisions import collision_with_box
 from utils.constants import Table1, Cup, Robot, Table2
+from utils.data import unpack_data_kinodynamic
 from utils.table import Table
 
 table = Table()
@@ -32,7 +33,7 @@ def air_hockey_puck(xyz, dt, puck_pose):
     dist_from_puck = tf.sqrt(tf.reduce_sum((puck_pose[:, tf.newaxis] - xy) ** 2, axis=-1))
     puck_loss = tf.nn.relu(0.09 - dist_from_puck)
     idx_ = tf.argmin(puck_loss[..., ::-1], axis=-1)
-    #a = 1000. / xyz.shape[1]
+    # a = 1000. / xyz.shape[1]
     # threshold = tf.math.sigmoid(-a * (tf.range(xyz.shape[1], dtype=tf.float32)[tf.newaxis] - tf.cast(xyz.shape[1] - idx_, tf.float32)[:, tf.newaxis]))
     # threshold_ = tf.where(threshold > 0.9, tf.ones_like(threshold), tf.zeros_like(threshold))
 
@@ -49,11 +50,22 @@ def air_hockey_puck(xyz, dt, puck_pose):
 def two_tables_vertical(xyz, R, dt, data):
     huber_along_path = lambda x: tf.reduce_sum(dt * huber(x), axis=-1)
 
-    collision_table_1 = collision_with_box(xyz, Robot.radius, Table1.xl, Table1.xh, Table1.yl, Table1.yh, -1e10, xyz[:, :1, -1:, -1] - Cup.height)
-    collision_table_2 = collision_with_box(xyz, Robot.radius, Table2.xl, Table2.xh, Table2.yl, Table2.yh, -1e10, xyz[:, -1:, -1:, -1] - Cup.height)
+    collision_table_1 = collision_with_box(xyz, Robot.radius, Table1.xl, Table1.xh, Table1.yl, Table1.yh, -1e10,
+                                           xyz[:, :1, -1:, -1] - Cup.height)
+    collision_table_2 = collision_with_box(xyz, Robot.radius, Table2.xl, Table2.xh, Table2.yl, Table2.yh, -1e10,
+                                           xyz[:, -1:, -1:, -1] - Cup.height)
 
     vertical_loss = huber_along_path(1.0 - R[:, :, 2, 2])
     collision_table_1_loss = huber_along_path(tf.reduce_sum(collision_table_1, axis=-1))
     collision_table_2_loss = huber_along_path(tf.reduce_sum(collision_table_2, axis=-1))
     constraint_losses = tf.stack([vertical_loss, collision_table_1_loss, collision_table_2_loss], axis=-1)
+    return constraint_losses
+
+
+def two_tables_vertical_end(xyz, R, dt, data):
+    two_tables_vertical_loss = two_tables_vertical(xyz, R, dt, data)
+    q0, qd, xyz0, xyzk, q_dot_0, q_dot_d, q_ddot_0 = unpack_data_kinodynamic(data, 7)
+    xyz_end_diff = xyzk - xyz[..., -1, -1, :]
+    xyz_end_loss = tf.reduce_sum(tf.square(xyz_end_diff), axis=-1)
+    constraint_losses = tf.concat([two_tables_vertical_loss, xyz_end_loss[..., tf.newaxis]], axis=-1)
     return constraint_losses
