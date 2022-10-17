@@ -26,8 +26,8 @@ class Table1:
 class Table2:
     xl = 0.2
     xh = 0.6
-    yl = 0.6
-    yh = 0.3
+    yl = 0.3
+    yh = 0.6
     z_range_l = 0.2
     z_range_h = 0.5
 
