@@ -65,7 +65,20 @@ def two_tables_vertical(xyz, R, dt, data):
 def two_tables_vertical_end(xyz, R, dt, data):
     two_tables_vertical_loss = two_tables_vertical(xyz, R, dt, data)
     q0, qd, xyz0, xyzk, q_dot_0, q_dot_d, q_ddot_0 = unpack_data_kinodynamic(data, 7)
-    xyz_end_diff = xyzk - xyz[..., -1, -1, :]
-    xyz_end_loss = tf.reduce_sum(tf.square(xyz_end_diff), axis=-1)
-    constraint_losses = tf.concat([two_tables_vertical_loss, xyz_end_loss[..., tf.newaxis]], axis=-1)
+    xyz_end = xyz[..., -1, -1, :]
+    # xyz_end_diff = xyzk - xyz_end
+    # xyz_end_loss = tf.reduce_sum(tf.square(xyz_end_diff), axis=-1)
+    relu_huber = lambda x: huber(tf.nn.relu(x))
+    border = 0.05
+    xl = Table2.xl - border
+    xh = Table2.xh - border
+    yl = Table2.yl - border
+    yh = Table2.yh - border
+    xlow_loss = relu_huber(xl - xyz_end[..., 0])
+    xhigh_loss = relu_huber(xyz_end[..., 0] - xh)
+    ylow_loss = relu_huber(yl - xyz_end[..., 1])
+    yhigh_loss = relu_huber(xyz_end[..., 1] - yh)
+    z_loss = huber(xyz_end[..., 2] - xyzk[..., 2])
+    xyz_losses = tf.stack([xlow_loss, xhigh_loss, ylow_loss, yhigh_loss, z_loss], axis=-1)
+    constraint_losses = tf.concat([two_tables_vertical_loss, xyz_losses], axis=-1)
     return constraint_losses
