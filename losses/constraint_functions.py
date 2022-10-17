@@ -70,9 +70,9 @@ def two_tables_vertical_end(xyz, R, dt, data):
     # xyz_end_loss = tf.reduce_sum(tf.square(xyz_end_diff), axis=-1)
     relu_huber = lambda x: huber(tf.nn.relu(x))
     border = 0.05
-    xl = Table2.xl - border
+    xl = Table2.xl + border
     xh = Table2.xh - border
-    yl = Table2.yl - border
+    yl = Table2.yl + border
     yh = Table2.yh - border
     xlow_loss = relu_huber(xl - xyz_end[..., 0])
     xhigh_loss = relu_huber(xyz_end[..., 0] - xh)
