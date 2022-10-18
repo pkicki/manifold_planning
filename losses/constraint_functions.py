@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 from losses.utils import huber
 from utils.collisions import collision_with_box
@@ -50,10 +51,15 @@ def air_hockey_puck(xyz, dt, puck_pose):
 def two_tables_vertical(xyz, R, dt, data):
     huber_along_path = lambda x: tf.reduce_sum(dt * huber(x), axis=-1)
 
-    collision_table_1 = collision_with_box(xyz, Robot.radius, Table1.xl, Table1.xh, Table1.yl, Table1.yh, -1e10,
-                                           xyz[:, :1, -1:, -1] - Cup.height)
-    collision_table_2 = collision_with_box(xyz, Robot.radius, Table2.xl, Table2.xh, Table2.yl, Table2.yh, -1e10,
-                                           xyz[:, -1:, -1:, -1] - Cup.height)
+    first_z = xyz[:, :1, -1:, -1].numpy()
+    last_z = xyz[:, -1:, -1:, -1].numpy()
+    o = np.ones_like(last_z)
+    collision_table_1 = collision_with_box(xyz, Robot.radius, Table1.xl * o, Table1.xh * o,
+                                           Table1.yl * o, Table1.yh * o, -1e10 * o,
+                                           first_z - Cup.height)
+    collision_table_2 = collision_with_box(xyz, Robot.radius, Table2.xl * o, Table2.xh * o,
+                                           Table2.yl * o, Table2.yh * o, -1e10 * o,
+                                           last_z - Cup.height)
 
     vertical_loss = huber_along_path(1.0 - R[:, :, 2, 2])
     collision_table_1_loss = huber_along_path(tf.reduce_sum(collision_table_1, axis=-1))
