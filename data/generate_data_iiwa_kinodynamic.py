@@ -35,6 +35,11 @@ def validate_optimization(q, expected_xyz):
     return xyz_error < 1e-2
 
 
+def validate_torques(q):
+    tau = pino.rnea(pino_model, pino_data, q, np.zeros_like(q), np.zeros_like(q))
+    a = 0
+
+
 if __name__ == "__main__":
     data = []
     ds = sys.argv[1]
@@ -78,37 +83,40 @@ if __name__ == "__main__":
 
         q0_init = draw(qlow, qhigh, n=7)
         xyz = np.concatenate([x0, y0, z0])
-        #q0 = po.solve(xyz, q0_init)
-        #q0_init = po.solve(xyz, q0_init)[:6]
+        # q0 = po.solve(xyz, q0_init)
+        # q0_init = po.solve(xyz, q0_init)[:6]
         q0 = poo.solve(xyz, q0_init)
         if not validate_optimization(q0, xyz):
             continue
         links_poses = man.interpolated_forward_kinematics(q0)[0][..., 0]
-        collision = collision_with_box(links_poses, radius, x0l, x0h, y0l, y0h, -1e10, z0 - height)
+        o = np.ones_like(z0)
+        collision = collision_with_box(links_poses, radius, x0l * o, x0h * o, y0l * o, y0h * o, -1e10 * o, z0 - height)
         if np.sum(collision): continue
-        collision = collision_with_box(links_poses, radius, xkl, xkh, ykl, ykh, -1e10, zk - height)
+        collision = collision_with_box(links_poses, radius, xkl * o, xkh * o, ykl * o, ykh * o, -1e10 * o, zk - height)
         if np.sum(collision): continue
 
-
-        qk_init = draw(qlow, qhigh, n=7)
+        #qk_init = draw(qlow, qhigh, n=7)
         xyz = np.concatenate([xk, yk, zk])
-        #qk = po.solve([xk, yk, zk], qk_init)
-        #qk = po.solve([xk, yk, zk])
-        #qk_init = po.solve(xyz, qk_init)[:6]
-        qk = poo.solve(xyz, qk_init)
+        # qk = po.solve([xk, yk, zk], qk_init)
+        # qk = po.solve([xk, yk, zk])
+        # qk_init = po.solve(xyz, qk_init)[:6]
+        qk = poo.solve(xyz, q0)
         if not validate_optimization(qk, xyz):
             continue
         links_poses = man.interpolated_forward_kinematics(qk)[0][..., 0]
-        collision = collision_with_box(links_poses, radius, x0l, x0h, y0l, y0h, -1e10, z0 - height)
+        collision = collision_with_box(links_poses, radius, x0l * o, x0h * o, y0l * o, y0h * o, -1e10 * o, z0 - height)
         if np.sum(collision): continue
-        collision = collision_with_box(links_poses, radius, xkl, xkh, ykl, ykh, -1e10, zk - height)
+        collision = collision_with_box(links_poses, radius, xkl * o, xkh * o, ykl * o, ykh * o, -1e10 * o, zk - height)
         if np.sum(collision): continue
+
+        validate_torques(q0)
+        validate_torques(qk)
 
         data.append(q0.tolist() + qk.tolist() + [x0, y0, z0] + [xk, yk, zk])
         i += 1
 
     # dir_name = f"paper/airhockey_table_moves_v08_a10v_tilted_93/{ds}"
-    dir_name = f"paper/kinodynamic7/{ds}"
+    dir_name = f"paper/kinodynamic7fixed/{ds}"
     os.makedirs(dir_name, exist_ok=True)
     np.savetxt(f"{dir_name}/data_{N}_{idx}.tsv", data, delimiter='\t', fmt="%.8f")
     os.popen(f'cp {os.path.basename(__file__)} {dir_name}')
