@@ -34,6 +34,7 @@ class Table2:
 
 class Cup:
     height = 0.15
+    width = 0.1
 
 
 class Robot:

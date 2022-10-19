@@ -326,8 +326,10 @@
       <origin rpy="0 0 0" xyz="0 0 0.0"/>
 <!--      <mass value="16.0"/>-->
 <!--      <inertia ixx="0.16" ixy="0.0" ixz="0.0" iyy="0.16" iyz="0.0" izz="0.08"/>-->
+<!--      <mass value="12.0"/>-->
+<!--      <inertia ixx="0.12" ixy="0.0" ixz="0.0" iyy="0.12" iyz="0.0" izz="0.06"/>-->
       <mass value="12.0"/>
-      <inertia ixx="0.12" ixy="0.0" ixz="0.0" iyy="0.12" iyz="0.0" izz="0.06"/>
+      <inertia ixx="0.13" ixy="0.0" ixz="0.0" iyy="0.13" iyz="0.0" izz="0.08"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0.0"/>

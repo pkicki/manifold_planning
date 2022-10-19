@@ -3,20 +3,20 @@ import numpy as np
 
 
 def inside_box(xyz, xl, xh, yl, yh, zl, zh):
-    pxl = xyz[..., 0] >= xl
-    pxh = xyz[..., 0] <= xh
-    pyl = xyz[..., 1] >= yl
-    pyh = xyz[..., 1] <= yh
-    pzl = xyz[..., 2] >= zl
-    pzh = xyz[..., 2] <= zh
+    pxl = xyz[..., 0] > xl
+    pxh = xyz[..., 0] < xh
+    pyl = xyz[..., 1] > yl
+    pyh = xyz[..., 1] < yh
+    pzl = xyz[..., 2] > zl
+    pzh = xyz[..., 2] < zh
     return tf.reduce_all(tf.stack([pxl, pxh, pyl, pyh, pzl, pzh], axis=-1), axis=-1)
 
 
 def inside_rectangle(xyz, xl, xh, yl, yh):
-    pxl = xyz[..., 0] >= xl
-    pxh = xyz[..., 0] <= xh
-    pyl = xyz[..., 1] >= yl
-    pyh = xyz[..., 1] <= yh
+    pxl = xyz[..., 0] > xl
+    pxh = xyz[..., 0] < xh
+    pyl = xyz[..., 1] > yl
+    pyh = xyz[..., 1] < yh
     return tf.reduce_all(tf.stack([pxl, pxh, pyl, pyh], axis=-1), axis=-1)
 
 
@@ -54,7 +54,7 @@ def collision_with_box(xyz, r, xl, xh, yl, yh, zl, zh):
     dist2box = dist_point_2_box(xyz, xl, xh, yl, yh, zl, zh)
     dist2box_inside = dist_point_2_box_inside(xyz, xl, xh, yl, yh, zl, zh)
     dist2box = tf.nn.relu(r - dist2box)
-    #collision = tf.where(inside, dist2box_inside, dist2box)
-    collision = tf.where(inside, tf.zeros_like(dist2box), dist2box)
+    collision = tf.where(inside, dist2box_inside, dist2box)
+    #collision = tf.where(inside, tf.zeros_like(dist2box), dist2box)
     #collision = dist2box
     return collision

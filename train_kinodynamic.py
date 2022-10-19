@@ -12,7 +12,7 @@ from losses.kinodynamic import KinodynamicLoss
 from utils.dataset import _ds
 from utils.execution import ExperimentHandler
 from utils.plotting import plot_qs
-from losses.constraint_functions import two_tables_vertical
+from losses.constraint_functions import two_tables_vertical, two_tables_vertical_objectcollision
 from losses.hittting import HittingLoss
 from models.iiwa_planner_boundaries import IiwaPlannerBoundariesKinodynamic
 from utils.constants import Limits, TableConstraint, UrdfModels
@@ -43,7 +43,8 @@ urdf_path = os.path.join(os.path.dirname(__file__), UrdfModels.iiwa_cup)
 
 N = 15
 opt = tf.keras.optimizers.Adam(args.learning_rate)
-loss = KinodynamicLoss(N, urdf_path, two_tables_vertical, None, Limits.q_dot7, Limits.q_ddot7, Limits.q_dddot7, Limits.tau7)
+#loss = KinodynamicLoss(N, urdf_path, two_tables_vertical, None, Limits.q_dot7, Limits.q_ddot7, Limits.q_dddot7, Limits.tau7)
+loss = KinodynamicLoss(N, urdf_path, two_tables_vertical_objectcollision, None, Limits.q_dot7, Limits.q_ddot7, Limits.q_dddot7, Limits.tau7)
 model = IiwaPlannerBoundariesKinodynamic(N, 3, 2, loss.bsp, loss.bsp_t)
 
 experiment_handler = ExperimentHandler(args.working_dir, args.out_name, args.log_interval, model, opt)

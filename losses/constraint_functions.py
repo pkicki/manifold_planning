@@ -67,6 +67,33 @@ def two_tables_vertical(xyz, R, dt, data):
     constraint_losses = tf.stack([vertical_loss, collision_table_1_loss, collision_table_2_loss], axis=-1)
     return constraint_losses
 
+def two_tables_vertical_objectcollision(xyz, R, dt, data):
+    two_tables_vertical_loss = two_tables_vertical(xyz, R, dt, data)
+    xyz_end = xyz[:, :, -1:]
+    h = Cup.height
+    w = Cup.width
+    xyz_cuboid = np.array([[w, w, h], [w, w, -h], [w, -w, h], [w, -w, -h],
+                           [-w, w, h], [-w, w, -h], [-w, -w, h], [-w, -w, -h]
+                           ])[np.newaxis, np.newaxis]
+    xyz_corners = xyz_end + (R[:, :, tf.newaxis] @ xyz_cuboid[..., np.newaxis])[..., 0]
+    first_z = xyz[:, :1, -1:, -1].numpy()
+    last_z = xyz[:, -1:, -1:, -1].numpy()
+    o = np.ones_like(last_z)
+    collision_table_1 = collision_with_box(xyz_corners, 0., Table1.xl * o, Table1.xh * o,
+                                           Table1.yl * o, Table1.yh * o, -1e10 * o,
+                                           first_z - Cup.height)
+    collision_table_2 = collision_with_box(xyz_corners, 0., Table2.xl * o, Table2.xh * o,
+                                           Table2.yl * o, Table2.yh * o, -1e10 * o,
+                                           last_z - Cup.height)
+    huber_along_path = lambda x: tf.reduce_sum(dt * huber(x), axis=-1)
+    collision_table_1_loss = huber_along_path(tf.reduce_sum(collision_table_1, axis=-1))
+    collision_table_2_loss = huber_along_path(tf.reduce_sum(collision_table_2, axis=-1))
+    constraint_losses = tf.concat([two_tables_vertical_loss, collision_table_1_loss[..., tf.newaxis],
+                                   collision_table_2_loss[..., tf.newaxis]], axis=-1)
+    return constraint_losses
+
+
+
 
 def two_tables_vertical_end(xyz, R, dt, data):
     two_tables_vertical_loss = two_tables_vertical(xyz, R, dt, data)
