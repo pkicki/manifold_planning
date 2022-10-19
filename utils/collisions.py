@@ -52,9 +52,17 @@ def dist_point_2_box_inside(xyz, xl, xh, yl, yh, zl, zh):
 def collision_with_box(xyz, r, xl, xh, yl, yh, zl, zh):
     inside = inside_box(xyz, xl, xh, yl, yh, zl, zh)
     dist2box = dist_point_2_box(xyz, xl, xh, yl, yh, zl, zh)
-    dist2box_inside = dist_point_2_box_inside(xyz, xl, xh, yl, yh, zl, zh)
+    #dist2box_inside = dist_point_2_box_inside(xyz, xl, xh, yl, yh, zl, zh)
     dist2box = tf.nn.relu(r - dist2box)
-    collision = tf.where(inside, dist2box_inside, dist2box)
+    #collision = tf.where(inside, dist2box_inside, dist2box)
+    collision = tf.where(inside, tf.zeros_like(dist2box), dist2box)
+    #collision = dist2box
+    return collision
+
+def simple_collision_with_box(xyz, xl, xh, yl, yh, zl, zh):
+    inside = inside_box(xyz, xl, xh, yl, yh, zl, zh)
+    dist2box_inside = dist_point_2_box_inside(xyz, xl, xh, yl, yh, zl, zh)
+    collision = tf.where(inside, dist2box_inside, tf.zeros_like(dist2box_inside))
     #collision = tf.where(inside, tf.zeros_like(dist2box), dist2box)
     #collision = dist2box
     return collision

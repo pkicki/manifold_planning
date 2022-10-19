@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 
 from losses.utils import huber
-from utils.collisions import collision_with_box
+from utils.collisions import collision_with_box, simple_collision_with_box
 from utils.constants import Table1, Cup, Robot, Table2
 from utils.data import unpack_data_kinodynamic
 from utils.table import Table
@@ -79,10 +79,10 @@ def two_tables_vertical_objectcollision(xyz, R, dt, data):
     first_z = xyz[:, :1, -1:, -1].numpy()
     last_z = xyz[:, -1:, -1:, -1].numpy()
     o = np.ones_like(last_z)
-    collision_table_1 = collision_with_box(xyz_corners, 0., Table1.xl * o, Table1.xh * o,
+    collision_table_1 = simple_collision_with_box(xyz_corners, Table1.xl * o, Table1.xh * o,
                                            Table1.yl * o, Table1.yh * o, -1e10 * o,
                                            first_z - Cup.height)
-    collision_table_2 = collision_with_box(xyz_corners, 0., Table2.xl * o, Table2.xh * o,
+    collision_table_2 = simple_collision_with_box(xyz_corners, Table2.xl * o, Table2.xh * o,
                                            Table2.yl * o, Table2.yh * o, -1e10 * o,
                                            last_z - Cup.height)
     huber_along_path = lambda x: tf.reduce_sum(dt * huber(x), axis=-1)
