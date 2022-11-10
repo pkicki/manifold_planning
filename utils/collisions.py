@@ -29,7 +29,7 @@ def dist_point_2_box(xyz, xl, xh, yl, yh, zl, zh):
     l = np.reshape(np.stack([xl, yl, zl], axis=-1), (-1,) + (1,)*(len(xyz.shape) - 2) + (3,))
     h = np.reshape(np.stack([xh, yh, zh], axis=-1), (-1,) + (1,)*(len(xyz.shape) - 2) + (3,))
     xyz_dist = tf.reduce_max(tf.stack([l - xyz, tf.zeros_like(xyz), xyz - h], axis=-1), axis=-1)
-    dist = tf.sqrt(tf.reduce_sum(tf.square(xyz_dist), axis=-1))
+    dist = tf.sqrt(tf.reduce_sum(tf.square(xyz_dist), axis=-1) + 1e-8)
         #x_dist = max_dist(xyz[..., 0], xl, xh)
         #y_dist = max_dist(xyz[..., 1], yl, yh)
         #z_dist = max_dist(xyz[..., 2], zl, zh)

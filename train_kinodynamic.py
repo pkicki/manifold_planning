@@ -12,7 +12,8 @@ from losses.kinodynamic import KinodynamicLoss
 from utils.dataset import _ds
 from utils.execution import ExperimentHandler
 from utils.plotting import plot_qs
-from losses.constraint_functions import two_tables_vertical, two_tables_vertical_objectcollision
+from losses.constraint_functions import two_tables_vertical, two_tables_vertical_objectcollision, \
+    two_tables_object_collision
 from losses.hittting import HittingLoss
 from models.iiwa_planner_boundaries import IiwaPlannerBoundariesKinodynamic
 from utils.constants import Limits, TableConstraint, UrdfModels
@@ -43,8 +44,7 @@ urdf_path = os.path.join(os.path.dirname(__file__), UrdfModels.iiwa_cup)
 
 N = 15
 opt = tf.keras.optimizers.Adam(args.learning_rate)
-#loss = KinodynamicLoss(N, urdf_path, two_tables_vertical, None, Limits.q_dot7, Limits.q_ddot7, Limits.q_dddot7, Limits.tau7)
-loss = KinodynamicLoss(N, urdf_path, two_tables_vertical_objectcollision, None, Limits.q_dot7, Limits.q_ddot7, Limits.q_dddot7, Limits.tau7)
+loss = KinodynamicLoss(N, urdf_path, two_tables_object_collision, None, Limits.q_dot7, Limits.q_ddot7, Limits.q_dddot7, Limits.tau7)
 model = IiwaPlannerBoundariesKinodynamic(N, 3, 2, loss.bsp, loss.bsp_t)
 
 experiment_handler = ExperimentHandler(args.working_dir, args.out_name, args.log_interval, model, opt)
@@ -65,13 +65,20 @@ for epoch in range(30000):
     q_dddot_losses = []
     constraint_losses = []
     torque_losses = []
-    puck_losses = []
+    vertical_losses = []
     for i, d in _ds('Train', dataset_epoch, train_size, epoch, args.batch_size):
         with tf.GradientTape(persistent=True) as tape:
             q_cps, t_cps = model(d)
-            model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, puck_loss, \
+            #np.save(f"{epoch:05d}.npy", {"q_cps": q_cps.numpy(), "t_cps": t_cps.numpy()})
+            model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, vertical_loss, \
             q, q_dot, q_ddot, q_dddot, torque, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss, \
-            int_torque_loss = loss(q_cps, t_cps, d)
+            int_torque_loss, constraint_losses_ = loss(q_cps, t_cps, d)
+            #c1 = constraint_losses_[:, 0]
+            #c2 = constraint_losses_[:, 1]
+            #c3 = constraint_losses_[:, 2]
+            #c4 = constraint_losses_[:, 3]
+            #c5 = constraint_losses_[:, 4]
+
         grads = tape.gradient(model_loss, model.trainable_variables)
         opt.apply_gradients(zip(grads, model.trainable_variables))
 
@@ -80,7 +87,7 @@ for epoch in range(30000):
         q_dddot_losses.append(q_dddot_loss)
         constraint_losses.append(constraint_loss)
         torque_losses.append(torque_loss)
-        puck_losses.append(puck_loss)
+        vertical_losses.append(vertical_loss)
         epoch_loss.append(model_loss)
         unscaled_epoch_loss.append(unscaled_model_loss)
         with tf.summary.record_if(train_step % args.log_interval == 0):
@@ -88,7 +95,7 @@ for epoch in range(30000):
             tf.summary.scalar('metrics/unscaled_model_loss', tf.reduce_mean(unscaled_model_loss), step=train_step)
             tf.summary.scalar('metrics/constraint_loss', tf.reduce_mean(constraint_loss), step=train_step)
             tf.summary.scalar('metrics/torque_loss', tf.reduce_mean(torque_loss), step=train_step)
-            tf.summary.scalar('metrics/puck_loss', tf.reduce_mean(puck_loss), step=train_step)
+            tf.summary.scalar('metrics/vertical_loss', tf.reduce_mean(vertical_loss), step=train_step)
             tf.summary.scalar('metrics/int_torque_loss', tf.reduce_mean(int_torque_loss), step=train_step)
             tf.summary.scalar('metrics/q_dot_loss', tf.reduce_mean(q_dot_loss), step=train_step)
             tf.summary.scalar('metrics/q_ddot_loss', tf.reduce_mean(q_ddot_loss), step=train_step)
@@ -102,8 +109,8 @@ for epoch in range(30000):
     q_dddot_losses = tf.reduce_mean(tf.concat(q_dddot_losses, 0))
     constraint_losses = tf.reduce_mean(tf.concat(constraint_losses, 0))
     torque_losses = tf.reduce_mean(tf.concat(torque_losses, 0))
-    puck_losses = tf.reduce_mean(tf.concat(puck_losses, 0))
-    loss.alpha_update(q_dot_losses, q_ddot_losses, q_dddot_losses, constraint_losses, torque_losses, puck_losses)
+    vertical_losses = tf.reduce_mean(tf.concat(vertical_losses, 0))
+    loss.alpha_update(q_dot_losses, q_ddot_losses, q_dddot_losses, constraint_losses, torque_losses, vertical_losses)
     epoch_loss = tf.reduce_mean(tf.concat(epoch_loss, -1))
     unscaled_epoch_loss = tf.reduce_mean(tf.concat(unscaled_epoch_loss, -1))
 
@@ -115,7 +122,7 @@ for epoch in range(30000):
         #tf.summary.scalar('epoch/alpha_q_dddot', loss.alpha_q_dddot, step=epoch)
         tf.summary.scalar('epoch/alpha_constraint', loss.alpha_constraint, step=epoch)
         tf.summary.scalar('epoch/alpha_torque', loss.alpha_torque, step=epoch)
-        #tf.summary.scalar('epoch/alpha_obstacle', loss.alpha_obstacle, step=epoch)
+        tf.summary.scalar('epoch/alpha_vertical', loss.alpha_vertical, step=epoch)
 
     # w = 1
     # if epoch % w == w - 1:
@@ -135,9 +142,9 @@ for epoch in range(30000):
     experiment_handler.log_validation()
     for i, d in _ds('Val', dataset_epoch, val_size, epoch, args.batch_size):
         q_cps, t_cps = model(d)
-        model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, puck_loss, \
+        model_loss, constraint_loss, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, vertical_loss, \
         q, q_dot, q_ddot, q_dddot, torque, xyz, t, t_cumsum, t_loss, dt, unscaled_model_loss, jerk_loss, \
-        int_torque_loss = loss(q_cps, t_cps, d)
+        int_torque_loss, _ = loss(q_cps, t_cps, d)
 
         epoch_loss.append(model_loss)
         unscaled_epoch_loss.append(unscaled_model_loss)
@@ -146,7 +153,7 @@ for epoch in range(30000):
             tf.summary.scalar('metrics/unscaled_model_loss', tf.reduce_mean(unscaled_model_loss), step=val_step)
             tf.summary.scalar('metrics/constraint_loss', tf.reduce_mean(constraint_loss), step=val_step)
             tf.summary.scalar('metrics/torque_loss', tf.reduce_mean(torque_loss), step=val_step)
-            tf.summary.scalar('metrics/puck_loss', tf.reduce_mean(puck_loss), step=val_step)
+            tf.summary.scalar('metrics/vertical_loss', tf.reduce_mean(vertical_loss), step=val_step)
             tf.summary.scalar('metrics/int_torque_loss', tf.reduce_mean(int_torque_loss), step=val_step)
             tf.summary.scalar('metrics/q_dot_loss', tf.reduce_mean(q_dot_loss), step=val_step)
             tf.summary.scalar('metrics/q_ddot_loss', tf.reduce_mean(q_ddot_loss), step=val_step)
@@ -162,7 +169,7 @@ for epoch in range(30000):
         tf.summary.scalar('epoch/loss', epoch_loss, step=epoch)
         tf.summary.scalar('epoch/unscaled_loss', unscaled_epoch_loss, step=epoch)
 
-    w = 50
+    w = 25
     if epoch % w == w - 1:
         experiment_handler.save_last()
     if best_unscaled_epoch_loss > unscaled_epoch_loss:
