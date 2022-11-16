@@ -40,6 +40,7 @@ def load_model_kino(path, N, bsp, bsp_t):
     model(np.zeros([1, 20], dtype=np.float32))
     ckpt = tf.train.Checkpoint(model=model)
     ckpt.restore(path).expect_partial()
+    return model
 
 
 def model_inference(model, data, bsp, bspt, expected_time=-1., uniform=False, freq=100):
