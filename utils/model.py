@@ -8,6 +8,8 @@ from manifold_planning.models.iiwa_planner import IiwaPlanner
 from manifold_planning.models.iiwa_planner_boundaries import IiwaPlannerBoundaries
 from manifold_planning.models.iiwa_ik_hitting import IiwaIKHitting
 
+from models.iiwa_planner_boundaries import IiwaPlannerBoundariesKinodynamic
+
 
 def load_model(path, N, n_pts_fixed_begin, bsp, bsp_t):
     model = IiwaPlanner(N, n_pts_fixed_begin, bsp, bsp_t)
@@ -31,6 +33,13 @@ def load_model_hpo(path):
     checkpoint = tf.train.Checkpoint(model=model)
     checkpoint.restore(path).expect_partial()
     return model
+
+
+def load_model_kino(path, N, bsp, bsp_t):
+    model = IiwaPlannerBoundariesKinodynamic(N, 3, 2, bsp, bsp_t)
+    model(np.zeros([1, 20], dtype=np.float32))
+    ckpt = tf.train.Checkpoint(model=model)
+    ckpt.restore(path)
 
 
 def model_inference(model, data, bsp, bspt, expected_time=-1., uniform=False, freq=100):
