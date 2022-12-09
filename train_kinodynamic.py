@@ -26,10 +26,10 @@ from utils.constants import Limits, TableConstraint, UrdfModels
 class args:
     batch_size = 128
     working_dir = './trainings'
-    out_name = 'kinodynamic7_lr5em5_bs128_alphas_1e0_1em2_1em4_1em2_bars_1em5_6em3_6em2_6em1_gamma3em3'
+    out_name = 'kinodynamic7fixed_12kg_validated_lr5em5_bs128_alphas_1e0_1em0_1el0_1em0_1em0_bars_1em5_1em6_6em3_6em2_6em2_gamma1em2'
     log_interval = 100
     learning_rate = 5e-5
-    dataset_path = "./data/paper/kinodynamic7/train/data.tsv"
+    dataset_path = "./data/paper/kinodynamic7fixed_12kg_validated/train/data.tsv"
 
 
 train_data = np.loadtxt(args.dataset_path, delimiter='\t').astype(np.float32)#[:256]
@@ -45,7 +45,7 @@ urdf_path = os.path.join(os.path.dirname(__file__), UrdfModels.iiwa_cup)
 N = 15
 opt = tf.keras.optimizers.Adam(args.learning_rate)
 loss = KinodynamicLoss(N, urdf_path, two_tables_object_collision, None, Limits.q_dot7, Limits.q_ddot7, Limits.q_dddot7, Limits.tau7)
-model = IiwaPlannerBoundariesKinodynamic(N, 3, 2, loss.bsp, loss.bsp_t)
+model = IiwaPlannerBoundariesKinodynamic(N, 3, 3, loss.bsp, loss.bsp_t)
 
 experiment_handler = ExperimentHandler(args.working_dir, args.out_name, args.log_interval, model, opt)
 
@@ -81,6 +81,25 @@ for epoch in range(30000):
 
         grads = tape.gradient(model_loss, model.trainable_variables)
         opt.apply_gradients(zip(grads, model.trainable_variables))
+        #gc = tape.gradient(constraint_loss, model.trainable_variables)
+        #gc1 = tape.gradient(c1, model.trainable_variables)
+        #gc2 = tape.gradient(c2, model.trainable_variables)
+        #gc3 = tape.gradient(c3, model.trainable_variables)
+        #gc4 = tape.gradient(c4, model.trainable_variables)
+        #gc5 = tape.gradient(c5, model.trainable_variables)
+        #gdq = tape.gradient(q_dot_loss, model.trainable_variables)
+        #gddq = tape.gradient(q_ddot_loss, model.trainable_variables)
+        #gtau = tape.gradient(torque_loss, model.trainable_variables)
+        #gt = tape.gradient(t_loss, model.trainable_variables)
+        #nans = []
+        #for g, name in [(gc, "constr"), (gc1, "constr1"), (gc2, "constr2"), (gc3, "constr3"), (gc4, "constr4"),
+        #                (gc5, "constr5"), (gdq, "DQ"), (gddq, "DDQ"), (gtau, "TAU"), (gt, "TIME")]:
+        #    is_nan = tf.math.is_nan(g[-1])
+        #    is_nan_ = tf.reduce_any(is_nan).numpy()
+        #    if is_nan_:
+        #        print("NAN!!!!  ", name)
+        #    nans.append(is_nan_)
+        #assert not np.any(nans)
 
         q_dot_losses.append(q_dot_loss)
         q_ddot_losses.append(q_ddot_loss)

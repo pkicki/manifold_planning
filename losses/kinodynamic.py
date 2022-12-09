@@ -28,7 +28,7 @@ class KinodynamicLoss(FeasibilityLoss):
         self.alpha_torque = tf.math.log(1e0)
         self.gamma = 1e-2
         self.bar_vertical = 1e-5
-        self.bar_constraint = 1e-9
+        self.bar_constraint = 1e-6
         self.bar_q_dot = 6e-3
         self.bar_q_ddot = 6e-2
         self.bar_q_dddot = 6e-1
