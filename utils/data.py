@@ -30,6 +30,15 @@ def unpack_data_kinodynamic(x, n):
     return q0, qk, xyz0, xyzk, q_dot_0, q_dot_k, q_ddot_0
 
 
+def unpack_data_acrobot(x):
+    q0 = x[:, :2]
+    qk = x[:, 4:6]
+    q_dot_0 = x[:, 2:4]
+    q_ddot_0 = np.zeros_like(q0)
+    q_dot_k = x[:, 6:8]
+    return q0, qk, None, None, q_dot_0, q_dot_k, q_ddot_0
+
+
 def unpack_data_linear_move(x, n):
     q0 = x[:, :n - 1]
     xyz0 = x[:, n:n + 3]
