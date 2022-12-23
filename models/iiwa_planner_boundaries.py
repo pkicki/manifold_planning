@@ -164,7 +164,22 @@ class IiwaPlannerBoundariesKinodynamic(IiwaPlannerBoundaries):
     def prepare_data(self, x):
         q0, qd, xyz0, xyzk, q_dot_0, q_dot_d, q_ddot_0 = unpack_data_kinodynamic(x, self.n_dof)
 
-        expected_time = tf.reduce_max(tf.abs(qd - q0) / Limits.q_dot7[np.newaxis], axis=-1)
+        #expected_time = tf.reduce_max(tf.abs(qd - q0) / Limits.q_dot7[np.newaxis], axis=-1)
+
+        delta_q = tf.abs(qd - q0)
+        diff_vmax_v0 = Limits.q_dot7 - q_dot_0
+        diff_vmax_vd = Limits.q_dot7 - q_dot_d
+        t_acc = diff_vmax_v0 / Limits.q_ddot7
+        t_dec = diff_vmax_vd / Limits.q_ddot7
+        s_acc = q_dot_0 * t_acc + 1./2. * Limits.q_ddot7 * t_acc**2
+        s_dec = Limits.q_dot7 * t_dec - 1./2. * Limits.q_ddot7 * t_dec**2
+        t_vmax = (delta_q - (s_acc + s_dec)) / Limits.q_dot7
+        s_acc_dec = s_acc + s_dec
+        t_novmax = (2 * tf.sqrt(Limits.q_ddot7 * delta_q + (q_dot_0**2 + q_dot_d**2) / 2.) - q_dot_0 - q_dot_d) / Limits.q_ddot7
+        t_exp = tf.where(s_acc_dec < delta_q, t_acc + t_dec + t_vmax, t_novmax)
+        expected_time = tf.reduce_max(t_exp, axis=-1)
+
+
 
         xb = q0 / pi
         #if self.n_pts_fixed_begin > 1:
