@@ -27,10 +27,10 @@ from utils.constants import Limits, TableConstraint, UrdfModels
 class args:
     batch_size = 128
     working_dir = './trainings'
-    out_name = 'p2p_0toall_12kg_lr5em5_bs128_alphas_1e0_1e0_1e0_bars_6em3_6em2_6em2_gamma1em2'
+    out_name = 'p2p_all2nearby02_12kg_lr5em5_bs128_alphas_1e0_1e0_1e0_bars_6em3_6em2_6em2_gamma1em2'
     log_interval = 100
     learning_rate = 5e-5
-    dataset_path = "./data/paper/p2p_12kg_fromto0/train/data.tsv"
+    dataset_path = "./data/paper/p2p_12kg_all2nearby02/train/data.tsv"
 
 
 train_data = np.loadtxt(args.dataset_path, delimiter='\t').astype(np.float32)#[:256]
