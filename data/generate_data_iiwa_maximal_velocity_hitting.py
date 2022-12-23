@@ -79,8 +79,6 @@ if __name__ == "__main__":
         data.append(q0.tolist() + qk + [xk, yk, thk] + q_dot_0.tolist() + [0.] + q_ddot_0.tolist() + [0.] + q_dot_k.tolist())
         i += 1
 
-    # dir_name = f"paper/airhockey_table_moves_v08_a10v_tilted_93/{ds}"
-    #dir_name = f"paper/airhockey_table_moves_v08_a10v_optimized_hitting_2/{ds}"
     dir_name = f"paper/airhockey_maximal_velocity_hitting_new/{ds}"
     ranges = [x0l, x0h, y0l, y0h, xkl, xkh, ykl, ykh]
     os.makedirs(dir_name, exist_ok=True)

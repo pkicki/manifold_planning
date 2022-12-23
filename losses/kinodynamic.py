@@ -1,14 +1,10 @@
-from time import perf_counter
+import numpy as np
+import tensorflow as tf
 import pinocchio as pino
-
-from scipy.sparse.linalg import cg
 
 from losses.feasibility import FeasibilityLoss
 from losses.utils import huber
-from utils.constants import Limits
 from utils.manipulator import Iiwa
-import tensorflow as tf
-import numpy as np
 
 
 class KinodynamicLoss(FeasibilityLoss):
@@ -24,7 +20,6 @@ class KinodynamicLoss(FeasibilityLoss):
         self.alpha_constraint = tf.math.log(1e0)
         self.alpha_q_dot = tf.math.log(1e0)
         self.alpha_q_ddot = tf.math.log(1e0)
-        #self.alpha_q_dddot = tf.math.log(1e-2)
         self.alpha_torque = tf.math.log(1e0)
         self.gamma = 1e-2
         self.bar_vertical = 1e-5
@@ -33,9 +28,6 @@ class KinodynamicLoss(FeasibilityLoss):
         self.bar_q_ddot = 6e-2
         self.bar_q_dddot = 6e-1
         self.bar_torque = 6e-2
-        self.jerk_mul = 1e-2
-        self.torque_mul = 1e0
-        self.centrifugal_mul = 1e-2
         self.time_mul = 1e0
 
     def call(self, q_cps, t_cps, data):
@@ -71,13 +63,11 @@ class KinodynamicLoss(FeasibilityLoss):
         max_alpha_update = 10.0
         alpha_q_dot_update = self.gamma * tf.clip_by_value(tf.math.log(q_dot_loss / self.bar_q_dot), -max_alpha_update, max_alpha_update)
         alpha_q_ddot_update = self.gamma * tf.clip_by_value(tf.math.log(q_ddot_loss / self.bar_q_ddot), -max_alpha_update, max_alpha_update)
-        #alpha_q_dddot_update = self.gamma * tf.clip_by_value(tf.math.log(q_dddot_loss / self.bar_q_dddot), -max_alpha_update, max_alpha_update)
         alpha_constraint_update = self.gamma * tf.clip_by_value(tf.math.log(constraint_loss / self.bar_constraint), -max_alpha_update, max_alpha_update)
         alpha_torque_update = self.gamma * tf.clip_by_value(tf.math.log(torque_loss / self.bar_torque), -max_alpha_update, max_alpha_update)
         alpha_vertical_update = self.gamma * tf.clip_by_value(tf.math.log(vertical_loss / self.bar_vertical), -max_alpha_update, max_alpha_update)
         self.alpha_q_dot += alpha_q_dot_update
         self.alpha_q_ddot += alpha_q_ddot_update
-        #self.alpha_q_dddot += alpha_q_dddot_update
         self.alpha_constraint += alpha_constraint_update
         self.alpha_torque += alpha_torque_update
         self.alpha_vertical += alpha_vertical_update

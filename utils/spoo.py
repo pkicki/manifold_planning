@@ -31,7 +31,6 @@ class StartPointOptimizerOrientation:
 
     def f(self, q, hit_point):
         pino.forwardKinematics(self.model, self.data, q)
-        #pino.forwardKinematics(self.model, self.data, np.pad(q, (0, self.n - len(q)), mode='constant'))
         pino.updateFramePlacements(self.model, self.data)
         x = self.data.oMf[-1].translation
         diff_x = x - hit_point
@@ -41,10 +40,6 @@ class StartPointOptimizerOrientation:
 
 
 if __name__ == "__main__":
-    #urdf_path = "../../iiwa_striker.urdf"
-    #urdf_path = "../iiwa.urdf"
-    #urdf_path = "../" + UrdfModels.striker
-    #point = np.array([0.65, 0.0, TableConstraint.Z])
     urdf_path = "../" + UrdfModels.iiwa_cup
     #point = np.array([0.4, 0.4, 0.4])
     #point = np.array([0.4, 0.4, 0.3])
@@ -57,8 +52,6 @@ if __name__ == "__main__":
     for i in range(100):
         qinit = (qhigh - qlow) * np.random.rand(7) + qlow
         q = po.solve(point, qinit)
-        #q = po.solve(point)
-        #pino.forwardKinematics(po.model, po.data, np.pad(q, (0, po.n - len(q)), mode='constant'))
         pino.forwardKinematics(po.model, po.data, q)
         pino.updateFramePlacements(po.model, po.data)
         xyz = po.data.oMf[-1].translation

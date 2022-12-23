@@ -269,7 +269,6 @@ class Iiwa:
 
 
 if __name__ == "__main__":
-    # urdf_path = "../iiwa_striker_new.urdf"
     urdf_path = "../iiwa.urdf"
     pino_model = pino.buildModelFromUrdf(urdf_path)
     pino_data = pino_model.createData()

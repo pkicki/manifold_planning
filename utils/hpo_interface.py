@@ -13,25 +13,17 @@ from utils.constants import Limits, UrdfModels, TableConstraint, Base
 import matplotlib.pyplot as plt
 
 import utils.hpo_opt_new as hpoo
-#import utils.hpo_opt as hpoo
-#import utils.hpo as hpo
 
-#import tensorflow as tf
 
 def get_hitting_configuration_opt(x, y, z, th, q0=None):
     if q0 is None:
         q0 = Base.configuration + [0.]
-        #q0 = [0.0, 0.06811, 0.0, -1.48, 0., 1.2544, 0.0]
-        #q0 = [0., 0.7135, 0., -0.5025, 0., 1.9257, 0.]
     q0 = q0 + [0.] * (9 - len(q0))
     s = hpoo.optimize(x, y, z, np.cos(th), np.sin(th), q0)
     if not s:
         return None, None
     q = s[:7]
-    #q_dot = np.array(s[7:14])
     q_dot = np.array(s[9:16])
-    #mul = np.max(np.abs(q_dot[:6]) / Limits.q_dot)
-    #q_dot = q_dot / mul
     return q, q_dot.tolist()
 
 if __name__ == "__main__":
@@ -43,20 +35,9 @@ if __name__ == "__main__":
     urdf_path = os.path.join(os.path.dirname(__file__), "..", UrdfModels.striker)
     model = pino.buildModelFromUrdf(urdf_path)
     data = model.createData()
-    #x = 1.0261847865032634
     x = 0.95
-    #x = 1.3
-    #y = 0.1638526734661639
-    #y = 0.16384
-    #y = 0.1638259
-    #y = 0.0
     y = -0.41
-    #y = -0.3
-    #y = -0.25
-    #th = -0.1114713380540327
-    #th = 0.1114713380540327
     th = 0.24
-    #q0[0] = y / 2
     print(np.cos(th), np.sin(th))
     q, q_dot = get_hitting_configuration_opt(x, y, TableConstraint.Z, th, q0)
     q = np.concatenate([np.array(q), np.zeros(2)], axis=-1)

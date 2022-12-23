@@ -1,42 +1,28 @@
 import os
-
-
-#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-from time import perf_counter
-
 import tensorflow as tf
 import numpy as np
-import matplotlib.pyplot as plt
 
 from utils.dataset import _ds
 from utils.execution import ExperimentHandler
-from utils.plotting import plot_qs
 from losses.constraint_functions import air_hockey_table, air_hockey_puck
 from losses.hittting import HittingLoss
-from models.iiwa_planner_boundaries import IiwaPlannerBoundaries, IiwaPlannerBoundariesHitting
+from models.iiwa_planner_boundaries import IiwaPlannerBoundariesHitting
 from utils.constants import Limits, TableConstraint, UrdfModels
-
-
-#physical_devices = tf.config.experimental.list_physical_devices('GPU')
-#assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
-#config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 class args:
     batch_size = 128
     working_dir = './trainings'
-    #out_name = 'test_single_short_bs128_data50k_N15_lr5em5_fixedjacobian_timescaling_exp_gamma1em2_initalpha_1em1_1em4_dtscaling_bars3em2_3em3_2em6_cont'
-    #out_name = 'test_single_short_bs128_data80k_N15_lr5em5_fixedjacobian_timescaling_exp_gamma1em2_initalpha_1em3_1em6_dtscaling'
-    out_name = 'test'
+    out_name = 'name_of_the_model'
     log_interval = 100
     learning_rate = 5e-5
-    dataset_path = "./data/paper/airhockey_table_moves_v08_a10v_beyond/train/data.tsv"
+    dataset_path = "./data/paper/air_hockey_hitting/train/data.tsv"
 
 
-train_data = np.loadtxt(args.dataset_path, delimiter='\t').astype(np.float32)[:40000]
+train_data = np.loadtxt(args.dataset_path, delimiter='\t').astype(np.float32)
 train_size = train_data.shape[0]
 train_ds = tf.data.Dataset.from_tensor_slices(train_data)
 
-val_data = np.loadtxt(args.dataset_path.replace("train", "val"), delimiter='\t').astype(np.float32)[:400]
+val_data = np.loadtxt(args.dataset_path.replace("train", "val"), delimiter='\t').astype(np.float32)
 val_size = val_data.shape[0]
 val_ds = tf.data.Dataset.from_tensor_slices(val_data)
 
@@ -120,16 +106,6 @@ for epoch in range(30000):
         tf.summary.scalar('epoch/alpha_torque', loss.alpha_torque, step=epoch)
         tf.summary.scalar('epoch/alpha_obstacle', loss.alpha_obstacle, step=epoch)
 
-    # w = 1
-    # if epoch % w == w - 1:
-    #   plot_qs(epoch, q, q_dot, q_ddot, dt, t_cumsum)
-    #   plt.plot(xyz[0, ..., -1, 0])
-    #   plt.savefig(f"z_{epoch:05d}.png")
-    #   plt.clf()
-    #   plt.plot(xyz[0, ..., 0, 0], xyz[0, ..., 1, 0])
-    #   plt.savefig(f"xy_{epoch:05d}.png")
-    #   plt.clf()
-
     # validation
     dataset_epoch = val_ds.shuffle(val_size)
     dataset_epoch = dataset_epoch.batch(args.batch_size).prefetch(args.batch_size)
@@ -168,7 +144,7 @@ for epoch in range(30000):
         tf.summary.scalar('epoch/loss', epoch_loss, step=epoch)
         tf.summary.scalar('epoch/unscaled_loss', unscaled_epoch_loss, step=epoch)
 
-    w = 50
+    w = 25
     if epoch % w == w - 1:
         experiment_handler.save_last()
     if best_unscaled_epoch_loss > unscaled_epoch_loss:

@@ -9,9 +9,7 @@ class BSpline:
         self.n_pts = n
         self.m = self.d + self.n_pts
         self.u = np.pad(np.linspace(0., 1., self.m + 1 - 2 * self.d), self.d, 'edge')
-        #self.u = np.linspace(0., 1., self.m + 1)
         fname = f"{os.path.dirname(__file__)}/bspline_{name}_{self.n_pts}_{self.d}_{self.num_T_pts}.npy"
-        #self.N, self.dN, self.ddN = self.calculate_N()
         if os.path.exists(fname):
             d = np.load(fname, allow_pickle=True).item()
             self.N = d["N"]

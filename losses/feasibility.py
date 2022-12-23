@@ -4,8 +4,6 @@ import pinocchio as pino
 
 from losses.utils import huber
 from utils.bspline import BSpline
-import multiprocessing as mpc
-from utils.constants import UrdfModels
 from utils.manipulator import Iiwa
 
 
@@ -17,7 +15,6 @@ class FeasibilityLoss:
         self.q_ddot_limits = q_ddot_limits
         self.q_dddot_limits = q_dddot_limits
         self.torque_limits = torque_limits
-        #urdf_path = UrdfModels.iiwa
         self.iiwa = Iiwa(urdf_path)
         self.model = pino.buildModelFromUrdf(urdf_path)
         self.data = self.model.createData()
@@ -32,9 +29,6 @@ class FeasibilityLoss:
         q_ = q.numpy() if type(q) is not np.ndarray else q
         dq_ = dq.numpy() if type(dq) is not np.ndarray else dq
         ddq_ = ddq.numpy() if type(ddq) is not np.ndarray else ddq
-        #q_ = np.pad(q, [[0, 0], [0, 0], [0, 1]], mode='constant')
-        #dq_ = np.pad(dq, [[0, 0], [0, 0], [0, 1]], mode='constant')
-        #ddq_ = np.pad(ddq, [[0, 0], [0, 0], [0, 1]], mode='constant')
 
         def grad(upstream):
             for i in range(q_.shape[0]):
@@ -70,11 +64,6 @@ class FeasibilityLoss:
         q_ddot = q_ddot_tau * dtau_dt ** 2 + ddtau_dtt * q_dot_tau * dtau_dt
         q_dddot = q_dddot_tau * dtau_dt ** 3 + 3 * q_ddot_tau * ddtau_dtt * dtau_dt ** 2 + \
                   q_dot_tau * dtau_dt ** 2 * dddtau_dttt + q_dot_tau * ddtau_dtt ** 2 * dtau_dt
-        #q_dddot = np.zeros_like(q_ddot)
-        # i = 0
-        # plt.plot(t_cumsum[0], q_ddot[0, :, i])
-        # plt.plot(t_cumsum[0], q_dddot[0, :, i])
-        # plt.show()
 
         q_dot_limits = tf.constant(self.q_dot_limits)[tf.newaxis, tf.newaxis]
         q_ddot_limits = tf.constant(self.q_ddot_limits)[tf.newaxis, tf.newaxis]
@@ -83,37 +72,19 @@ class FeasibilityLoss:
 
         torque = self.rnea(q, q_dot, q_ddot)
 
-        #rnea_q = tf.stack([q, q, q], axis=1)
-        #rnea_q_dot = tf.stack([q_dot, q_dot, tf.zeros_like(q_dot)], axis=1)
-        #rnea_q_ddot = tf.stack([q_dot, tf.zeros_like(q_ddot), tf.zeros_like(q_ddot)], axis=1)
-        #torques = self.iiwa.rnea(rnea_q, rnea_q_dot, rnea_q_ddot)[..., :6]
-        #torque = torques[:, 0]
-
-        #centrifugal_coriolis = torques[:, 1] - torques[:, 2]
-        #torque = self.iiwa.rnea(q, q_dot, q_ddot)[..., :6]
-        #torque = np.zeros_like(q_dddot)
-
         torque_loss_ = tf.nn.relu(tf.abs(torque) - torque_limits)
         torque_loss_ = huber(torque_loss_)
         torque_loss = tf.reduce_sum(torque_loss_ * dt[..., tf.newaxis], axis=1)
 
-        # q_dot_loss_ = tf.reduce_sum(tf.nn.relu(tf.abs(q_dot) - q_dot_limits), axis=-1)
-        # q_dot_loss = tf.reduce_mean(q_dot_loss_, axis=-1)
-        # q_ddot_loss_ = tf.reduce_sum(tf.nn.relu(tf.abs(q_ddot) - q_ddot_limits), axis=-1)
-        # q_ddot_loss = tf.reduce_mean(q_ddot_loss_, axis=-1)
         q_dot_loss_ = tf.nn.relu(tf.abs(q_dot) - q_dot_limits)
         q_dot_loss_ = huber(q_dot_loss_)
-        # q_dot_loss_ = tf.square(q_dot_loss_)
-        q_dot_loss = tf.reduce_sum(q_dot_loss_ * dt[..., tf.newaxis], axis=1)  # / t[..., tf.newaxis]
-        # q_dot_loss = tf.reduce_mean(q_dot_loss_, axis=1)
+        q_dot_loss = tf.reduce_sum(q_dot_loss_ * dt[..., tf.newaxis], axis=1)
         q_ddot_loss_ = tf.nn.relu(tf.abs(q_ddot) - q_ddot_limits)
         q_ddot_loss_ = huber(q_ddot_loss_)
-        # q_ddot_loss_ = tf.square(q_ddot_loss_)
-        q_ddot_loss = tf.reduce_sum(q_ddot_loss_ * dt[..., tf.newaxis], axis=1)  # / t[..., tf.newaxis]
-        # q_ddot_loss = tf.reduce_mean(q_ddot_loss_, axis=1)
+        q_ddot_loss = tf.reduce_sum(q_ddot_loss_ * dt[..., tf.newaxis], axis=1)
         q_dddot_loss_ = tf.nn.relu(tf.abs(q_dddot) - q_dddot_limits)
         q_dddot_loss_ = huber(q_dddot_loss_)
-        q_dddot_loss = tf.reduce_sum(q_dddot_loss_ * dt[..., tf.newaxis], axis=1)  # / t[..., tf.newaxis]
+        q_dddot_loss = tf.reduce_sum(q_dddot_loss_ * dt[..., tf.newaxis], axis=1)
         model_losses = tf.concat([q_dot_loss, q_ddot_loss, q_dddot_loss], axis=-1)
         model_loss = tf.reduce_sum(model_losses, axis=-1)
         return model_loss, q_dot_loss, q_ddot_loss, q_dddot_loss, torque_loss, q, q_dot, q_ddot, q_dddot, torque,\

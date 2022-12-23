@@ -16,6 +16,7 @@ def compute_cartesian_losses(ee):
     z_loss = np.abs(ee[..., 2] - z)
     return z_loss, xlow_loss, xhigh_loss, ylow_loss, yhigh_loss
 
+
 def check_if_plan_valid(ee, q, q_dot, q_ddot, torque):
     z_loss, xlow_loss, xhigh_loss, ylow_loss, yhigh_loss = compute_cartesian_losses(ee)
 
