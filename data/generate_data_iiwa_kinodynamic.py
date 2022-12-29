@@ -37,7 +37,9 @@ def validate_optimization(q, expected_xyz):
 
 def validate_torques(q):
     tau = pino.rnea(pino_model, pino_data, q, np.zeros_like(q), np.zeros_like(q))
-    a = 0
+    error = np.abs(tau) - Limits.tau7
+    valid = np.all(error < 0)
+    return valid
 
 
 if __name__ == "__main__":
@@ -109,14 +111,14 @@ if __name__ == "__main__":
         collision = collision_with_box(links_poses, radius, xkl * o, xkh * o, ykl * o, ykh * o, -1e10 * o, zk - height)
         if np.sum(collision): continue
 
-        validate_torques(q0)
-        validate_torques(qk)
+        if not validate_torques(q0): continue
+        if not validate_torques(qk): continue
 
         data.append(q0.tolist() + qk.tolist() + [x0, y0, z0] + [xk, yk, zk])
         i += 1
 
     # dir_name = f"paper/airhockey_table_moves_v08_a10v_tilted_93/{ds}"
-    dir_name = f"paper/kinodynamic7fixed/{ds}"
+    dir_name = f"paper/kinodynamic7fixed_12kg_validated/{ds}"
     os.makedirs(dir_name, exist_ok=True)
     np.savetxt(f"{dir_name}/data_{N}_{idx}.tsv", data, delimiter='\t', fmt="%.8f")
     os.popen(f'cp {os.path.basename(__file__)} {dir_name}')
