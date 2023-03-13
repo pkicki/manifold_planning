@@ -5,7 +5,6 @@ from scipy import optimize as spo
 import pinocchio as pino
 
 from utils.constants import UrdfModels, TableConstraint, Base
-from utils.manipulator import Iiwa
 
 
 class StartPointOptimizer:
