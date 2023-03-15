@@ -17,6 +17,8 @@ import utils.hpo_opt_new as hpoo
 #import utils.hpo as hpo
 
 #import tensorflow as tf
+urdf_path = os.path.join(os.path.dirname(__file__), "..", UrdfModels.striker)
+
 
 def get_hitting_configuration_opt(x, y, z, th, q0=None):
     if q0 is None:
@@ -24,7 +26,7 @@ def get_hitting_configuration_opt(x, y, z, th, q0=None):
         #q0 = [0.0, 0.06811, 0.0, -1.48, 0., 1.2544, 0.0]
         #q0 = [0., 0.7135, 0., -0.5025, 0., 1.9257, 0.]
     q0 = q0 + [0.] * (9 - len(q0))
-    s = hpoo.optimize(x, y, z, np.cos(th), np.sin(th), q0)
+    s = hpoo.optimize(urdf_path, x, y, z, np.cos(th), np.sin(th), q0)
     if not s:
         return None, None
     q = s[:7]
@@ -40,7 +42,6 @@ if __name__ == "__main__":
     q0 = [0.0, 0.06811,  0.0, -1.48, 0.,  1.2544, 0.0]
     q0 = Base.configuration + [0.]
     q0_ = Base.configuration + [0.]
-    urdf_path = os.path.join(os.path.dirname(__file__), "..", UrdfModels.striker)
     model = pino.buildModelFromUrdf(urdf_path)
     data = model.createData()
     #x = 1.0261847865032634

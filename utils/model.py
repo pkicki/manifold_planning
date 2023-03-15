@@ -33,6 +33,8 @@ def load_model_boundaries_hitting(path, N, n_pts_fixed_begin, n_pts_fixed_end, b
     model(np.zeros([1, 38], dtype=np.float32))
     checkpoint = tf.train.Checkpoint(model=model)
     checkpoint.restore(path).expect_partial()
+    model.prepare_weights()
+    model.inference(np.zeros([1, 38], dtype=np.float32))
     return model
 
 
@@ -41,6 +43,8 @@ def load_model_boundaries_hitting_heights(path, N, n_pts_fixed_begin, n_pts_fixe
     model(np.zeros([1, 39], dtype=np.float32))
     checkpoint = tf.train.Checkpoint(model=model)
     checkpoint.restore(path).expect_partial()
+    model.prepare_weights()
+    model.inference(np.zeros([1, 39], dtype=np.float32))
     return model
 
 
@@ -77,8 +81,13 @@ def compute_trajectory(q_cps, t_cps, bsp, bspt):
     q_dot = q_dot_tau * dtau_dt
     q_ddot = q_ddot_tau * dtau_dt ** 2 + ddtau_dtt * q_dot_tau * dtau_dt
 
-    #return q.numpy()[0], q_dot.numpy()[0], q_ddot.numpy()[0], t.numpy()[0]
     return q[0], q_dot[0], q_ddot[0], t[0]
+
+
+def model_fast_inference(model, data, bsp, bspt):
+    q_cps, t_cps = model.inference(data)
+    q, q_dot, q_ddot, t = compute_trajectory(q_cps, t_cps, bsp, bspt)
+    return q, q_dot, q_ddot, t, q_cps, t_cps
 
 
 def model_inference(model, data, bsp, bspt, expected_time=-1., uniform=False, freq=100):

@@ -65,9 +65,9 @@ class IiwaPlannerBoundaries(tf.keras.Model):
 
     def inference(self, x):
         t = []
-        t.append(perf_counter())
+        #t.append(perf_counter())
         x, q0, qd, q_dot_0, q_dot_d, q_ddot_0, expected_time = self.prepare_data_inference(x)
-        t.append(perf_counter())
+        #t.append(perf_counter())
         q_ddot_d = np.zeros_like(q_ddot_0)
 
 
@@ -87,32 +87,32 @@ class IiwaPlannerBoundaries(tf.keras.Model):
         #    dtau_dt = l(dtau_dt)
         for k, b, a in self.t_np:
             dtau_dt = a((k @ dtau_dt[..., np.newaxis])[..., 0] + b)
-        t.append(perf_counter())
+        #t.append(perf_counter())
 
         #q_est = q_est.numpy()
         #dtau_dt = dtau_dt.numpy()
-        t.append(perf_counter())
+        #t.append(perf_counter())
 
         # dtau_dt = dtau_dt / expected_time_[:, tf.newaxis]
         dtau_dt = dtau_dt / expected_time[:, np.newaxis]
 
-        t.append(perf_counter())
+        #t.append(perf_counter())
         q = pi * np.reshape(q_est, (-1, self.N, self.n_dof))
-        t.append(perf_counter())
+        #t.append(perf_counter())
         s = np.linspace(0., 1., q.shape[1] + 2)[np.newaxis, 1:-1, np.newaxis]
-        t.append(perf_counter())
+        #t.append(perf_counter())
 
         q1 = q_dot_0 / dtau_dt[:, :1] / self.qd1 + q0
-        t.append(perf_counter())
+        #t.append(perf_counter())
         qm1 = qd - q_dot_d / dtau_dt[:, -1:] / self.qd1
-        t.append(perf_counter())
+        #t.append(perf_counter())
         q2 = ((q_ddot_0 / dtau_dt[:, :1] -
                self.qd1 * self.td1 * (q1 - q0) * (dtau_dt[:, 1] - dtau_dt[:, 0])[:, np.newaxis]) / dtau_dt[:, :1]
               - self.qdd1 * q0 - self.qdd2 * q1) / self.qdd3
         qm2 = ((q_ddot_d / dtau_dt[:, -1:] -
               self.qd1 * self.td1 * (qd - qm1) * (dtau_dt[:, -1] - dtau_dt[:, -2])[:, np.newaxis]) / dtau_dt[:, -1:]
              - self.qdd1 * qd - self.qdd2 * qm1) / self.qdd3
-        t.append(perf_counter())
+        #t.append(perf_counter())
 
         q0 = q0[:, np.newaxis]
         q1 = q1[:, np.newaxis]
@@ -131,58 +131,58 @@ class IiwaPlannerBoundaries(tf.keras.Model):
             q_end.append(qm1)
         if self.n_pts_fixed_end > 2:
            q_end.append(qm2)
-        t.append(perf_counter())
+        #t.append(perf_counter())
 
         qb = q_begin[-1] * (1 - s) + q_end[-1] * s
 
         x = np.concatenate(q_begin + [q + qb] + q_end[::-1], axis=-2)
-        t.append(perf_counter())
-        for i in range(len(t) - 1):
-            print(i, t[i+1] - t[i])
+        #t.append(perf_counter())
+        #for i in range(len(t) - 1):
+        #    print(i, t[i+1] - t[i])
         return x, dtau_dt[..., np.newaxis]
 
     def __call__(self, x, mul=1.):
         t = []
-        t.append(perf_counter())
-        x, q0, qd, q_dot_0, q_dot_d, q_ddot_0, expected_time = self.prepare_data(x)
-        t.append(perf_counter())
+        #t.append(perf_counter())
+        x, q0, qd, q_dot_0, q_dot_d, q_ddot_0, _, expected_time = self.prepare_data(x)
+        #t.append(perf_counter())
         q_ddot_d = np.zeros_like(q_ddot_0)
 
         for l in self.fc:
             x = l(x)
 
-        t.append(perf_counter())
+        #t.append(perf_counter())
         q_est = x
         for l in self.q_est:
             q_est = l(q_est)
 
-        t.append(perf_counter())
+        #t.append(perf_counter())
         dtau_dt = x
         for l in self.t_est:
             dtau_dt = l(dtau_dt)
-        t.append(perf_counter())
+        #t.append(perf_counter())
 
         # dtau_dt = dtau_dt / expected_time_[:, tf.newaxis]
         dtau_dt = dtau_dt / expected_time[:, tf.newaxis]
 
-        t.append(perf_counter())
+        #t.append(perf_counter())
         q = pi * tf.reshape(q_est, (-1, self.N, self.n_dof))
-        t.append(perf_counter())
+        #t.append(perf_counter())
         #s = tf.linspace(0., 1., tf.shape(q)[1] + 2)[tf.newaxis, 1:-1, tf.newaxis]
         s = np.linspace(0., 1., tf.shape(q)[1] + 2)[np.newaxis, 1:-1, np.newaxis]
-        t.append(perf_counter())
+        #t.append(perf_counter())
 
         q1 = q_dot_0 / dtau_dt[:, :1] / self.qd1 + q0
-        t.append(perf_counter())
+        #t.append(perf_counter())
         qm1 = qd - q_dot_d / dtau_dt[:, -1:] / self.qd1
-        t.append(perf_counter())
+        #t.append(perf_counter())
         q2 = ((q_ddot_0 / dtau_dt[:, :1] -
                self.qd1 * self.td1 * (q1 - q0) * (dtau_dt[:, 1] - dtau_dt[:, 0])[:, tf.newaxis]) / dtau_dt[:, :1]
               - self.qdd1 * q0 - self.qdd2 * q1) / self.qdd3
         qm2 = ((q_ddot_d / dtau_dt[:, -1:] -
               self.qd1 * self.td1 * (qd - qm1) * (dtau_dt[:, -1] - dtau_dt[:, -2])[:, np.newaxis]) / dtau_dt[:, -1:]
              - self.qdd1 * qd - self.qdd2 * qm1) / self.qdd3
-        t.append(perf_counter())
+        #t.append(perf_counter())
 
         q0 = q0[:, tf.newaxis]
         q1 = q1[:, tf.newaxis]
@@ -201,14 +201,14 @@ class IiwaPlannerBoundaries(tf.keras.Model):
             q_end.append(qm1)
         if self.n_pts_fixed_end > 2:
            q_end.append(qm2)
-        t.append(perf_counter())
+        #t.append(perf_counter())
 
         qb = q_begin[-1] * (1 - s) + q_end[-1] * s
 
         x = tf.concat(q_begin + [q + qb] + q_end[::-1], axis=-2)
-        t.append(perf_counter())
-        for i in range(len(t) - 1):
-            print(i, t[i+1] - t[i])
+        #t.append(perf_counter())
+        #for i in range(len(t) - 1):
+        #    print(i, t[i+1] - t[i])
         return x, dtau_dt[..., tf.newaxis]
 
 
@@ -269,6 +269,30 @@ class IiwaPlannerBoundariesHitting(IiwaPlannerBoundaries):
         # x = tf.concat([xb, xe, xp], axis=-1)
         x = tf.concat([xb, xe], axis=-1)
         return x, q0, qd, q_dot_0, q_dot_d, q_ddot_0, np.zeros_like(q_ddot_0), expected_time
+
+
+    def prepare_data_inference(self, x):
+        q0, qd, xyth, q_dot_0, q_dot_d, q_ddot_0, puck_pose = unpack_data_boundaries(x, self.n_dof + 1)
+        # q_ddot_0 = np.zeros_like(q_ddot_0)
+        # q_ddot_d = np.zeros_like(q_ddot_0)
+
+        expected_time = np.max(np.abs(qd - q0) / Limits.q_dot[np.newaxis], axis=-1) + 1e-8
+
+        xb = q0 / pi
+        if self.n_pts_fixed_begin > 1:
+            xb = np.concatenate([xb, q_dot_0 / Limits.q_dot[np.newaxis]], axis=-1)
+        if self.n_pts_fixed_begin > 2:
+            xb = np.concatenate([xb, q_ddot_0 / Limits.q_ddot[np.newaxis]], axis=-1)
+        xe = qd / pi
+        if self.n_pts_fixed_end > 1:
+            xe = np.concatenate([xe, q_dot_d / Limits.q_dot[np.newaxis]], axis=-1)
+        # if self.n_pts_fixed_end > 2:
+        #    xe = tf.concat([xe, q_ddot_d / Limits.q_ddot[np.newaxis]], axis=-1)
+        #xp = normalize_xy(puck_pose)
+
+        # x = tf.concat([xb, xe, xp], axis=-1)
+        x = np.concatenate([xb, xe], axis=-1)
+        return x, q0, qd, q_dot_0, q_dot_d, q_ddot_0, expected_time
 
 
 class IiwaPlannerBoundariesKinodynamic(IiwaPlannerBoundaries):
@@ -336,7 +360,6 @@ class IiwaPlannerBoundariesHittingHeights(IiwaPlannerBoundaries):
 
     def prepare_data(self, x):
         q0, qd, xyth, q_dot_0, q_dot_d, q_ddot_0, table_height = unpack_data_boundaries_heights(x, self.n_dof + 1)
-        print("MODEL TABLE HEIGHT:", table_height)
 
         expected_time = tf.reduce_max(tf.abs(qd - q0) / Limits.q_dot[np.newaxis], axis=-1)
 
@@ -352,3 +375,21 @@ class IiwaPlannerBoundariesHittingHeights(IiwaPlannerBoundaries):
 
         x = tf.concat([xb, xe, table_height], axis=-1)
         return x, q0, qd, q_dot_0, q_dot_d, q_ddot_0, np.zeros_like(q_ddot_0), expected_time
+
+    def prepare_data_inference(self, x):
+        q0, qd, xyth, q_dot_0, q_dot_d, q_ddot_0, table_height = unpack_data_boundaries_heights(x, self.n_dof + 1)
+
+        expected_time = np.max(np.abs(qd - q0) / Limits.q_dot[np.newaxis], axis=-1) + 1e-8
+
+        xb = q0 / pi
+        if self.n_pts_fixed_begin > 1:
+            xb = np.concatenate([xb, q_dot_0 / Limits.q_dot[np.newaxis]], axis=-1)
+        if self.n_pts_fixed_begin > 2:
+            xb = np.concatenate([xb, q_ddot_0 / Limits.q_ddot[np.newaxis]], axis=-1)
+
+        xe = qd / pi
+        if self.n_pts_fixed_end > 1:
+            xe = np.concatenate([xe, q_dot_d / Limits.q_dot[np.newaxis]], axis=-1)
+
+        x = np.concatenate([xb, xe, table_height], axis=-1)
+        return x, q0, qd, q_dot_0, q_dot_d, q_ddot_0, expected_time
