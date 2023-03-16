@@ -60,10 +60,10 @@ def load_model_kino(path, N, bsp, bsp_t):
     model = IiwaPlannerBoundariesKinodynamic(N, 3, 2, bsp, bsp_t)
     #model = IiwaPlannerBoundariesKinodynamic(N, 3, 3, bsp, bsp_t)
     model(np.zeros([1, 20], dtype=np.float32))
-    model.prepare_weights()
-    model.inference(np.zeros([1, 20], dtype=np.float32))
     ckpt = tf.train.Checkpoint(model=model)
     ckpt.restore(path).expect_partial()
+    model.prepare_weights()
+    model.inference(np.zeros([1, 20], dtype=np.float32))
     return model
 
 
