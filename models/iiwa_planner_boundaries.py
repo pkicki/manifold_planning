@@ -320,13 +320,13 @@ class IiwaPlannerBoundariesKinodynamic(IiwaPlannerBoundaries):
 
 
         xb = q0 / pi
-        #if self.n_pts_fixed_begin > 1:
-        #    xb = tf.concat([xb, q_dot_0 / Limits.q_dot7[np.newaxis]], axis=-1)
-        #if self.n_pts_fixed_begin > 2:
-        #    xb = tf.concat([xb, q_ddot_0 / Limits.q_ddot7[np.newaxis]], axis=-1)
+        if self.n_pts_fixed_begin > 1:
+            xb = tf.concat([xb, q_dot_0 / Limits.q_dot7[np.newaxis]], axis=-1)
+        if self.n_pts_fixed_begin > 2:
+            xb = tf.concat([xb, q_ddot_0 / Limits.q_ddot7[np.newaxis]], axis=-1)
         xe = qd / pi
-        #if self.n_pts_fixed_end > 1:
-        #    xe = tf.concat([xe, q_dot_d / Limits.q_dot7[np.newaxis]], axis=-1)
+        if self.n_pts_fixed_end > 1:
+            xe = tf.concat([xe, q_dot_d / Limits.q_dot7[np.newaxis]], axis=-1)
         # if self.n_pts_fixed_end > 2:
         #    xe = tf.concat([xe, q_ddot_d / Limits.q_ddot[np.newaxis]], axis=-1)
 
